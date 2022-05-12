@@ -1,0 +1,15 @@
+version: "3.8"
+services:
+  mongodb:
+    container_name: mongodb
+    image: mongo
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=gree
+      - MONGO_INITDB_ROOT_PASSWORD=8771
+    volumes:
+      - mongodb_data:/var/lib/mongodb # Mount dir, where mongodb will store date, to enable stateful app mode
+    ports:
+      - '27017:27017'
+    restart: unless-stopped
+volumes:
+  mongodb_data:

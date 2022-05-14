@@ -1,5 +1,6 @@
-**MongoDB** - это NoSQL решение, позволяющее нам хранить данные в коллекциях,
-которые составлены из документов.
+# MongoDB
+
+It's a NoSQL solution that allows us to store data in collections that are made up of documents.
 
 ## Console
 

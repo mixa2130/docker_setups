@@ -37,7 +37,7 @@ document.
 To add a document to your database, use the db.collection.insert() command.
 
 ~~~bash
-> db.user.insert({name: "Ada Lovelace", age: 205})
+> db.user.insertOne({name: "Ada Lovelace", age: 205})
 WriteResult({ "nInserted" : 1 })
 ~~~
 

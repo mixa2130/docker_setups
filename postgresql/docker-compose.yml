@@ -1,0 +1,14 @@
+version: "3.9"
+services:
+  postgres:
+    image: postgres:14.0
+    environment:
+      POSTGRES_DB: "tests"
+      POSTGRES_USER: "gree"
+      POSTGRES_PASSWORD: "8771"
+    ports:
+      - "5432:5432"
+    volumes:
+       - postgres_data:/home/postgres
+volumes:
+  postgres_data:

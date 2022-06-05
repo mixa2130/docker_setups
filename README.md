@@ -87,3 +87,27 @@ our containers use this method of user mapping and should be applied accordingly
 - PGID=1000
 ~~~
 
+## Expose ports
+
+~~~dockerfile
+version: "3.9"
+services:
+  web:
+    build: .
+    ports:
+    # HOST_PORT:CONTAINER_PORT
+      - "8000:8000"
+  db:
+    image: postgres
+    ports:
+      - "8001:5432"
+~~~
+
+It is important to note the distinction between HOST_PORT and CONTAINER_PORT. 
+In the above example, for db, the HOST_PORT is 8001 and the container port is 5432 (postgres default). 
+
+**Networked service-to-service communication uses the CONTAINER_PORT.**
+
+**When HOST_PORT is defined, the service is accessible outside the docker as well.**
+
+Within the web container, your connection string to db would look like postgres://db:5432, and from the host machine, the connection string would look like postgres://{DOCKER_IP}:8001.

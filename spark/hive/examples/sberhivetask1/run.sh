@@ -1,0 +1,1 @@
+hive -f task1.sql

@@ -77,15 +77,6 @@ Additionally, we never write the tmpfs mounts to the host system’s filesystem.
 the "tmpfs" mount is temporary and only persisted in the host memory. When the container stops, the "tmpfs" mount
 removes, and files written there won’t persist.
 
-## Tips
-
-Using the PUID and PGID allows our containers to map the container's internal user to a user on the host machine. All of
-our containers use this method of user mapping and should be applied accordingly.
-
-~~~
-- PUID=1000
-- PGID=1000
-~~~
 
 ## Expose ports
 
@@ -110,4 +101,32 @@ In the above example, for db, the HOST_PORT is 8001 and the container port is 54
 
 **When HOST_PORT is defined, the service is accessible outside the docker as well.**
 
-Within the web container, your connection string to db would look like postgres://db:5432, and from the host machine, the connection string would look like postgres://{DOCKER_IP}:8001.
+Within the web container, your connection string to db would look like postgres://db:5432, 
+and from the host machine, the connection string would look like postgres://{DOCKER_IP}:8001.
+
+## Tips
+
+Using the PUID and PGID allows our containers to map the container's internal user to a user on the host machine. All of
+our containers use this method of user mapping and should be applied accordingly.
+
+~~~
+- PUID=1000
+- PGID=1000
+~~~
+
+### Bash into a running container
+
+~~~bash
+docker ps
+~~~
+
+~~~
+CONTAINER ID   IMAGE           COMMAND                  CREATED        STATUS          PORTS                    NAMES
+44bf2e32249f   postgres:14.0   "docker-entrypoint.s…"   4 months ago   Up 15 minutes   0.0.0.0:5432->5432/tcp   postgresql_postgres_1
+~~~
+
+~~~bash
+docker exec -ti 44bf2e32249f /bin/bash
+~~~
+
+

@@ -305,7 +305,6 @@ cpu-quota — количество микросекунд внутри cpu-perio
 * Burstable - request < limit, в каких-то случаях приложение может использовать больше ресурсов чем запрошено.
 * BestEffort - нет лимитов для приложений
 
-
 О чём говорит класс? В итоге получается, что если у нас мало ресурсов на ноде и надо их частично освободить, то с
 большей вероятностью уйдут BestEffort, чем Guaranteed. Но если ресурсов совсем не хватает, то уйдут и поды
 гарантированного класса.
@@ -335,23 +334,23 @@ spec:
         app: my-app
     spec:
       containers:
-      - image: nginx:1.20
-        name: nginx
-        env: # Наши переменные окружения
-        - name: TEST
-          value: foo
-        envFrom:
-        - configMapRef:
-            name: my-configmap-env
-        ports:
-        - containerPort: 80
-        resources:
-          requests:
-            cpu: 50m
-            memory: 100Mi
-          limits:
-            cpu: 100m
-            memory: 100Mi
+        - image: nginx:1.20
+          name: nginx
+          env: # Наши переменные окружения
+            - name: TEST
+              value: foo
+          envFrom:
+            - configMapRef:
+                name: my-configmap-env
+          ports:
+            - containerPort: 80
+          resources:
+            requests:
+              cpu: 50m
+              memory: 100Mi
+            limits:
+              cpu: 100m
+              memory: 100Mi
 
 ~~~
 
@@ -377,7 +376,25 @@ data: # Наши переменные окружения
 
 ConfigMap хранит всё в открытом виде
 
+Подключение в Deployment:
+
+~~~yaml
+spec:
+  containers:
+    - image: nginx:1.20
+      name: nginx
+      env:
+        - name: TEST
+          value: foo
+      envFrom:
+        - configMapRef:
+            name: my-configmap-env
+
+~~~
+
 ### Secrets
+
+![k8s_secrets2.png](readme_photos%2Fk8s_secrets2.png)
 
 *Generic* - пароли и ключи
 
@@ -418,38 +435,335 @@ stringData:
 
 ~~~yaml
 env:
-    - name: TEST
-      value: foo
-    - name: TEST_1
-      valueFrom:
-        secretKeyRef:
-          name: test
-          key: test1
-    - name: __NODE_NAME
-      valueFrom:
-        fieldRef:
-          fieldPath: spec.nodeName
-    - name: __POD_NAME
-      valueFrom:
-        fieldRef:
-          fieldPath: metadata.name
-    - name: __POD_NAMESPACE
-      valueFrom:
-        fieldRef:
-          fieldPath: metadata.namespace
-    - name: __POD_IP
-      valueFrom:
-        fieldRef:
-          fieldPath: status.podIP
-    - name: __NODE_IP
-      valueFrom:
-        fieldRef:
-          fieldPath: status.hostIP
-    - name: __POD_SERVICE_ACCOUNT
-      valueFrom:
-        fieldRef:
-          fieldPath: spec.serviceAccountName
+  - name: TEST
+    value: foo
+  - name: TEST_1
+    valueFrom:
+      secretKeyRef:
+        name: test
+        key: test1
+  - name: __NODE_NAME
+    valueFrom:
+      fieldRef:
+        fieldPath: spec.nodeName
+  - name: __POD_NAME
+    valueFrom:
+      fieldRef:
+        fieldPath: metadata.name
+  - name: __POD_NAMESPACE
+    valueFrom:
+      fieldRef:
+        fieldPath: metadata.namespace
+  - name: __POD_IP
+    valueFrom:
+      fieldRef:
+        fieldPath: status.podIP
+  - name: __NODE_IP
+    valueFrom:
+      fieldRef:
+        fieldPath: status.hostIP
+  - name: __POD_SERVICE_ACCOUNT
+    valueFrom:
+      fieldRef:
+        fieldPath: spec.serviceAccountName
 ~~~
+
+## volumes
+
+### HostPath
+
+![hostpath.png](readme_photos%2Fvolumes%2Fhostpath.png)
+
+*Самый опасный вариант*
+
+~~~
+spec:
+      containers:
+      - image: nginx:1.20
+        name: nginx
+        ports:
+        - containerPort: 80
+        resources:
+          requests:
+            cpu: 50m
+            memory: 100Mi
+          limits:
+            cpu: 100m
+            memory: 100Mi
+        volumeMounts:
+        - name: data
+          mountPath: /files
+      volumes:
+      - name: data
+        hostPath:
+          path: /data_pod
+
+~~~
+
+### EmptyDir
+
+Автоматически создаваемая папка где-то на сервере под контейнер, чтобы записывать туда данные.
+Каталог существует пока существует Pod. При удалении pod-a удалится и директория.
+
+~~~yaml
+volumeMounts:
+  - name: data
+    mountPath: /files
+  volumes:
+    - name: data
+      emptyDir: { }
+~~~
+
+### PV/PVC - persistent volume
+
+Для подключения внешнего хранилища
+
+![pv.png](readme_photos%2Fvolumes%2Fpv.png)
+
+## Структура Pod-а
+
+В общем виде можно выделить 4 вида дополнительных «полезных» контейнеров:
+
+* Init;
+* Sidecar;
+* Adapter;
+* Ambassador.
+
+### initContainers
+
+* Позволяет выполнить настройку перед запуском основного приложения
+* Выполняется по порядку описания в манифесте
+* Можно монтировать те же тома, что и в основных контейнерах
+* Можно запускать от другого пользователя
+* Должен выполнить действие и остановиться
+
+### Sidecar Containers
+
+В общем случае sidecar-контейнер — это контейнер с законченной функциональностью, которая нужна приложению, но не
+является частью его бизнес-логики. За счёт такого разделения разработчики могут фокусироваться на одной задаче.
+Платформенная команда отвечает за дополнительные возможности, например, делает приложение более отказоустойчивым,
+надёжным. В свою очередь прикладные разработчики занимаются исключительно бизнес-логикой приложения.
+
+Sidecar-контейнеры чаще всего используются для добавления платформенной функциональности, например:
+
+* Service Mesh — в этом случае добавляется сетевой прокси, который обрабатывает все запросы, добавляет observability,
+  делает mutual TLS и остальные полезные вещи.
+* Журналирование, если вам по каким-то причинам не нравится решение собирать логи через daemon, который бежит на воркере
+  Kubernetes и забирает данные сразу с контейнерного runtime'а.
+* Централизованный аудит.
+
+### Adapter Containers
+
+Адаптеры — такие же sidecar’ы, но узкоспециализированные. Они используются тогда, когда в приложение нужно добавить
+новый API, но не хочется (или не получается) сделать это на уровне приложения.
+
+* Metrics API. Есть система мониторинга на базе Prometheus и приложение, которое про эту систему мониторинга вообще
+  ничего
+  не знает. У этого приложения есть либо только свои метрики, либо нет вообще нет никаких. Для «неинвазивного» решения
+  проблемы достаточно добавить Prometheus экспортер отдельным контейнером, который опубликует все нужные метрики в
+  правильном формате.
+* Custom API. Позволяет добавить произвольный API по аналогии с примером метрик.
+* RBAC Proxy. Дополнительный контейнер становится точкой входа в приложение и добавляет стандартный RBAC Kubernetes. Это
+  делается очень быстро и во многих случаях бывает полезно.
+
+### Ambassador Containers
+
+Эти контейнеры похожи на адаптеры, но работают в обратную сторону: они инкапсулируют в себя всю сложность внешнего API и
+позволяют использовать его понятным для приложения способом.
+
+## Health checking
+
+![k8s_probes.png](readme_photos%2Fk8s_probes.png)
+
+~~~yaml
+spec:
+  containers:
+    - image: nginx:1.20
+      name: nginx
+      ports:
+        - containerPort: 80
+      readinessProbe:
+        failureThreshold: 3 # Количество попыток
+        httpGet: # 
+          path: /
+          port: 80
+        periodSeconds: 10
+        successThreshold: 1 # Количество успешных проверок чтобы сбросить счётчик failureThreshold 
+        timeoutSeconds: 1
+      livenessProbe:
+        failureThreshold: 3
+        httpGet:
+          path: /
+          port: 80
+        periodSeconds: 10
+        successThreshold: 1
+        timeoutSeconds: 1
+        initialDelaySeconds: 10
+      startupProbe:
+        httpGet:
+          path: /
+          port: 80
+        failureThreshold: 30
+        periodSeconds: 10
+      resources:
+        requests:
+          cpu: 50m
+          memory: 100Mi
+        limits:
+          cpu: 100m
+          memory: 100Mi
+~~~
+
+## Способы публикации
+
+### Service
+
+Service — это абстракция, определяющая набор подов и доступ к ним. Он является объектом REST в API K8S, а службы самого
+K8S настраивают прокси (iptables, ipvs) на пересылку и фильтрацию трафика только тем контейнерам, которые были выбраны в
+его селекторе. При создании сервиса ему также присваивается внутренний IP- адрес сети K8S.
+
+Чтобы указать, где будет размещен наш сервис, будет ли он доступен снаружи или только внутри, используются типы сервиса.
+По умолчанию это всегда ClusterIP, то есть сервис будет доступен только внутри самого кластера.
+
+Типы:
+
+#### ClusterIP 
+
+Присваивает IP в сервисной сети, который доступен только внутри кластера. Как правило используется 
+для межсервисной организации.
+
+![iptables.png](readme_photos%2Fservices%2Fiptables.png)
+
+
+
+#### NodePort
+
+Предоставляет порт на внешнем ip самого узла (ноды), сервис будет доступен из вне по выделенному порту на
+каждой ноде. При этом создается и внутренний сервис ClusterIP.
+Лучше всего подходит для TCP вариантов или для использования с внешним балансировщиком.
+
+![nodeport.png](readme_photos%2Fservices%2Fnodeport.png)
+
+
+
+#### LoadBalancer 
+
+Используется для внешних облачных балансировщиков, таких как Google Cloud, которые имеют своего
+провайдера. Сервис будет доступен через внешний балансировщик вашего провайдера, при этом создаются NodePort с портами,
+куда будет приходить трафик от провайдера и ClusterIP.
+
+#### ExternalName
+
+Сопоставляет сервис с содержимым поля Host (например foo.bar.example.com), возвращая запись CNAME с ее значением.
+Проксирование в этом режиме не производится.
+![externalname.png](readme_photos%2Fservices%2Fexternalname.png)
+
+#### ExternalIPS
+
+![externalips.png](readme_photos%2Fservices%2Fexternalips.png)
+
+Стоит отметить режим NodePort, который позволяет использовать свои решения внешней балансировки, привязав ваш сервис к
+внешнему порту ноды кубера, если в манифесте порт не задан, то K8S сам назначит ему порт из диапазона 30000–32767. При
+указании вручную, вы также должны будете выбрать порт из этого же диапазона.
+
+### Пример
+
+APP:
+
+~~~yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-deployment
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: my-app
+  strategy:
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 1
+    type: RollingUpdate
+    
+    
+  template:
+    metadata:
+      labels:
+        app: my-app
+        
+    spec:
+      containers:
+      - image: nginx:1.20
+        name: nginx
+        ports:
+        - containerPort: 80
+        readinessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /
+            port: 80
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+        livenessProbe:
+          failureThreshold: 3
+          httpGet:
+            path: /
+            port: 80
+          periodSeconds: 10
+          successThreshold: 1
+          timeoutSeconds: 1
+          initialDelaySeconds: 10
+        resources:
+          requests:
+            cpu: 10m
+            memory: 100Mi
+          limits:
+            cpu: 10m
+            memory: 100Mi
+        volumeMounts:
+        - name: config
+          mountPath: /etc/nginx/conf.d/
+      volumes:
+      - name: config
+        configMap:
+          name: my-configmap
+
+~~~
+
+
+Service:
+
+~~~yaml
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+  app: nginx-hello
+  name: nginx-hello
+spec:
+  ports:
+  - name: http
+  port: 80
+  targetPort: 80
+  selector:
+      app: my-app
+  type: ClusterIP
+~~~
+
+![Screenshot_20240223_144041.png](readme_photos%2Fservices%2FScreenshot_20240223_144041.png)
+
+Curl-м и попадаем в разные Pod-ы
+Внутри pod-в мы можем обращаться к другим используя dns имя.
+
+
+### Ingress
+
+Для публикации web приложений на HTTP/HTTPS. Это не сервис, а отдельная абстракция.
+
+
+![ingress.png](readme_photos%2Fservices%2Fingress.png)
 
 
 ## Команды:
@@ -470,6 +784,7 @@ kubectl apply -f pod.yaml
 
 ~~~bash
 kubectl get pod
+-w # в реальном времени как поднимается под
 ~~~
 
 Просмотр ReplicaSet
@@ -482,6 +797,12 @@ kubectl get rs
 
 ~~~bash
 kubectl get cm
+~~~
+
+Просмотр services:
+
+~~~bash
+kubectl get svc
 ~~~
 
 Описание:
@@ -514,4 +835,18 @@ kubectl logs {pod_name}
 
 ~~~bash
 kubectl get {cm/pod} {name} -o yaml
+~~~
+
+Открытие портов:
+
+~~~bash
+kubectl port-forward {pod_name} {port to local}:{port app works} &
+~~~
+
+& - чтобы работал в фоне
+
+Pod для тестов:
+
+~~~bash
+kubectl run test  --image=amount/network-utils -it bash
 ~~~

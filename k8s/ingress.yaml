@@ -8,19 +8,26 @@ metadata:
     # Если на кластере настроен cert manager, то можно подключить его для автоподписывания и тд:
     certmanager.k8s.io/clusterissuer: letsencrypt
 spec:
-  tls:
+  tls: # SSL сертификаты
     - hosts:
         - sslfoo.com
       secretName: secret-tls
-  rules:
+  rules: # Правила маршрутизации
     - host: foo.mydomain.com
       http:
         paths:
           - pathType: Prefix
-            path: "/"
+            path: "/orders"
             backend:
               service:
-                name: my-service
+                name: orders-service
                 port:
-                  number: 80
+                  number: 8080
+          - pathType: Prefix
+            path: "/blog"
+            backend:
+              service:
+                name: blog-service
+                port:
+                  number: 8081
 

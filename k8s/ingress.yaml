@@ -1,0 +1,26 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: my-ingress-nginx
+  annotations: # Расширение функциональности объектов/ обращение к ingress-controller
+    kubernetes.io/ingress.class: "nginx"
+    nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+    # Если на кластере настроен cert manager, то можно подключить его для автоподписывания и тд:
+    certmanager.k8s.io/clusterissuer: letsencrypt
+spec:
+  tls:
+    - hosts:
+        - sslfoo.com
+      secretName: secret-tls
+  rules:
+    - host: foo.mydomain.com
+      http:
+        paths:
+          - pathType: Prefix
+            path: "/"
+            backend:
+              service:
+                name: my-service
+                port:
+                  number: 80
+

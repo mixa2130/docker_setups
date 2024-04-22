@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+
+metadata:
+  name: test-api-service
+
+spec:
+  type: ClusterIP
+
+  selector: # метки, чтобы pod понял с каких подов направлять трафик
+    app: test-api
+
+  ports:
+    - name: http
+      port: 80 # На какой принимать трафик
+      targetPort: 8080 # На какой отправлять
+      protocol: TCP

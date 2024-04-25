@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-api-deployment
+spec:
+  replicas: 2
+
+  selector: # будет считать своими Pod-ми все Pod-ы с этой меткой
+    matchLabels: # метка для группировки
+      app: test-api
+
+  template: # Шаблон Pod-в
+
+    metadata: # все создаваемые Pod-ы будет иметь эту метку
+      labels:
+        app: test-api
+
+    spec:
+      containers:
+        - name: test-api-container
+          image: k8s-demo-app:0.2.0
+          ports:
+            - containerPort: 8080
+
+          # Resources
+          resources:
+            requests:
+              cpu: 150m
+              memory: 200Mi
+            limits:
+              cpu: 300m
+              memory: 400Mi
+
+          # Health check
+          startupProbe:
+            httpGet:
+              path: /health
+              port: 8080
+            failureThreshold: 3
+            periodSeconds: 10
+          readinessProbe:
+            failureThreshold: 3 # количество проваленных попыток
+            httpGet: # сама проверка, по HTTP на код 200-399
+              path: /health
+              port: 8080
+            periodSeconds: 10
+            successThreshold: 1 # кол-во успешных попыток до сбрасывания failureThreshold
+            timeoutSeconds: 1
+          livenessProbe:
+            failureThreshold: 3
+            httpGet:
+              path: /health
+              port: 8080
+            periodSeconds: 10
+            successThreshold: 1
+            timeoutSeconds: 1
+            initialDelaySeconds: 10 # через сколько после запуска приложения начать проверку
+

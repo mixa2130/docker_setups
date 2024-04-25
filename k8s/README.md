@@ -24,9 +24,23 @@
 
 <img src="images/k8s_pod.png" width="570" height="340" />
 
+# Полезные ссылки
+
+https://habr.com/ru/companies/ua-hosting/articles/502052/
+
+## Namespace
+
+
+
 ## Deployment
 
 ### Resources
+
+Если Pod попробует использовать ресурсов больше чем указано в limit-е - придёт oom killer и убьёт приложение, что
+приведёт к перезапуску pod. Request помогает распределить наши поды по нодам.
+
+<img src="images/docker_resources.png" width="570" height="340" />
+
 
 #### Memory
 

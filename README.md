@@ -228,24 +228,6 @@ maxUnavailable: 0
 
 Это просто разделение пространства имён.
 
-## Resources
-
-![k8s_resources.png](readme_photos%2Fk8s_resources.png)
-
-Если Pod попробует использовать ресурсов больше чем указано в limit-е - придёт oom killer и убьёт приложение, что
-приведёт к перезапуску pod. Request помогает распределить наши поды по нодам.
-
-![k8s_docker_resources.png](readme_photos%2Fk8s_docker_resources.png)
-
-~~~yaml
-resources:
-  requests:
-    cpu: 100m
-    memory: 100Mi
-  limits:
-    cpu: 100m
-    memory: 100Mi
-~~~
 
 
 ### Qos Class

@@ -1,7 +1,6 @@
 # Оглавление
 
 * [Оглавление](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#оглавление)
-* [Полезные ссылки](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#полезные-ссылки)
 * [Абстракции](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#абстракции)
     * [Namespace](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#namespace)
     * [Deployment](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#deployment)
@@ -17,6 +16,7 @@
             * [httpGET](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#httpget)
             * [exec](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#exec)
             * [TCP](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#tcp)
+        * [Downward API](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#downward-api)
     * [Service](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#service)
         * [ClusterIP](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#clusterip)
         * [NodePort](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#nodeport)
@@ -25,6 +25,8 @@
         * [Headless](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#headless)
     * [Ingress](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#ingress)
 * [k8s dashboard](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#k8s-dashboard)
+* [Полезные ссылки](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#полезные-ссылки)
+
 
 
 # Абстракции
@@ -134,6 +136,7 @@ cpu-quota — количество микросекунд внутри cpu-perio
 * env
 * ConfigMap
 * secrets
+* Vault (Secman)
 
 #### ENV
 
@@ -168,6 +171,16 @@ envFrom:
 * generic - пароли/токены для приложений
 * docker-registry - данные авторизации в docker registry
 * tls - TLS сертификаты для ingress
+
+~~~bash
+kubectl create secret generic test --from-literal=test1=asdf --from-literal=dbpassword=1q2w3e
+kubectl get secret test -o yaml
+~~~
+
+secret лишь кодирует пароль, а не шифрует:
+
+<img src="images/k8s_secrets.png" width="670" height="340" />
+
 
 ### Health Check
 
@@ -246,6 +259,22 @@ livenessProbe:
 * host: имя хоста для подключения; по умолчанию — IP pod’а. Можно задать хост в заголовках HTTP.
 * httpHeaders: кастомные заголовки для запроса. HTTP разрешает повторяющиеся заголовки.
 * scheme: схема для подключения к хосту (HTTP или HTTPS). По умолчанию — HTTP.
+
+### Downward API
+
+Передать значения из манифеста в приложение
+
+~~~yaml
+env:
+  - name: __NODE_NAME
+    valueFrom:
+      fieldRef:
+        fieldPath: spec.nodeName
+  - name: __POD_NAME
+    valueFrom:
+      fieldRef:
+        fieldPath: metadata.name
+~~~
 
 ## Service
 

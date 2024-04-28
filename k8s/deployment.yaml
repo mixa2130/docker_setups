@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: test-api-container
-          image: k8s-demo-app:0.2.1
+          image: k8s-demo-app:0.2.2
           ports:
             - containerPort: 8080
 
@@ -37,6 +37,8 @@ spec:
           envFrom:
             - configMapRef:
                 name: pg-configmap-env
+            - secretRef:
+                name: coolap-secret
 
           # Resources
           resources:

@@ -226,10 +226,6 @@ maxUnavailable: 0
 
 
 
-## Конфигурация через переменные окружения
-
-В deployment:
-
 ~~~yaml
 apiVersion: apps/v1
 kind: Deployment
@@ -249,69 +245,11 @@ spec:
     metadata:
       labels:
         app: my-app
-    spec:
-      containers:
-        - image: nginx:1.20
-          name: nginx
-          env: # Наши переменные окружения
-            - name: TEST
-              value: foo
-          envFrom:
-            - configMapRef:
-                name: my-configmap-env
-          ports:
-            - containerPort: 80
-          resources:
-            requests:
-              cpu: 50m
-              memory: 100Mi
-            limits:
-              cpu: 100m
-              memory: 100Mi
-
 ~~~
 
-Environment можно посмотреть в describe пода. Или через:
 
-~~~bash
-kubectl exec -it {pod_name} -- env
-~~~
-
-![k8s_configmap.png](readme_photos%2Fk8s_configmap.png)
-
-Пример configmap:
-
-~~~yaml
-apiVersion: v1
-kind: ConfigMap
-metadata:
-  name: my-configmap-env
-data: # Наши переменные окружения
-  dbhost: postgresql
-  DEBUG: "false"
-~~~
-
-ConfigMap хранит всё в открытом виде
-
-Подключение в Deployment:
-
-~~~yaml
-spec:
-  containers:
-    - image: nginx:1.20
-      name: nginx
-      env:
-        - name: TEST
-          value: foo
-      envFrom:
-        - configMapRef:
-            name: my-configmap-env
-
-~~~
 
 ### Secrets
-
-![k8s_secrets2.png](readme_photos%2Fk8s_secrets2.png)
 
 *Generic* - пароли и ключи
 

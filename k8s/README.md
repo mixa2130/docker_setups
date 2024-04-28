@@ -1,3 +1,36 @@
+
+Оглавление:
+
+* [Полезные ссылки](#markdown-header-полезные-ссылки)
+* [Абстракции](#markdown-header-абстракции)
+    * [Namespace](#markdown-header-namespace)
+    * [Deployment](#markdown-header-deployment)
+        * [Resources](#markdown-header-resources)
+            * [Memory](#markdown-header-memory)
+            * [CPU](#markdown-header-cpu)
+            * [Qos class](#markdown-header-qos-class)
+        * [Secrets](#markdown-header-secrets)
+            * [ENV](#markdown-header-env)
+            * [ConfigMap](#markdown-header-configmap)
+            * [Secrets](#markdown-header-secrets)
+        * [Health Check](#markdown-header-health-check)
+            * [httpGET](#markdown-header-httpget)
+            * [exec](#markdown-header-exec)
+            * [TCP](#markdown-header-tcp)
+    * [Service](#markdown-header-service)
+        * [ClusterIP](#markdown-header-clusterip)
+        * [NodePort](#markdown-header-nodeport)
+        * [LoadBalancer](#markdown-header-loadbalancer)
+        * [ExternalIPs](#markdown-header-externalips)
+        * [Headless](#markdown-header-headless)
+    * [Ingress](#markdown-header-ingress)
+    * [k8s dashboard](#markdown-header-k8s-dashboard)
+
+
+# Полезные ссылки
+
+* https://habr.com/ru/companies/ua-hosting/articles/502052/
+
 # Абстракции
 
 * Namespace — пространство имен. Объекты могут взаимодействовать, только если находятся в одном namespace. С помощью
@@ -23,10 +56,6 @@
   загруженности.
 
 <img src="images/k8s_pod.png" width="570" height="340" />
-
-# Полезные ссылки
-
-https://habr.com/ru/companies/ua-hosting/articles/502052/
 
 ## Namespace
 
@@ -106,6 +135,10 @@ cpu-quota — количество микросекунд внутри cpu-perio
 
 ### Secrets
 
+* env
+* ConfigMap
+* secrets
+
 #### ENV
 
 ~~~yaml
@@ -115,6 +148,30 @@ template:
       - name: TEST
         value: foo
 ~~~
+
+#### ConfigMap
+
+Хранит всё в открытом виде
+
+Подключение в Deployment:
+
+~~~yaml
+env:
+  - name: DEBUG
+    valueFrom:
+      configMapKeyRef:
+        name: pg-configmap-env
+        key: debug_test
+envFrom:
+  - configMapRef:
+      name: pg-configmap-env
+~~~
+
+#### Secrets
+
+* generic - пароли/токены для приложений
+* docker-registry - данные авторизации в docker registry
+* tls - TLS сертификаты для ingress
 
 ### Health Check
 
@@ -136,15 +193,19 @@ template:
 * exec - выполнение команды внутри контейнера. Любая команда, например select 1
 * TCPsocket - проверка на существование сокета
 
+#### httpGET
 ~~~yaml
-# ____________httpGET____________
 livenessProbe:
   httpGet:
     path: /health
     port: 8080
   initialDelaySeconds: 5
   periodSeconds: 3
-# ____________exec________________
+~~~
+
+#### exec
+
+~~~yaml
 livenessProbe:
   exec:
     command:
@@ -152,7 +213,11 @@ livenessProbe:
       - /tmp/status_check.sh
   initialDelaySeconds: 10
   periodSeconds: 5
-# ____________TCP_________________
+~~~
+
+#### TCP
+
+~~~yaml
 livenessProbe:
   tcpSocket:
     port: 8080
@@ -204,10 +269,10 @@ ClusterIP — сервис Kubernetes по умолчанию. Он обеспе
 
 Однако можно открыть порт:
 
+{порт на localhost:port в service на который надо принимать трафик}
+
 ~~~bash
 kubectl port-forward service/{service-name} 10000:80 -n coolapp
-# 10000 - порт на localhost
-# 80 - port в service на который надо принимать трафик
 ~~~
 
 Используется для внутрикластерной балансировки. Она подойдет, например, для организации взаимодействия отдельных групп

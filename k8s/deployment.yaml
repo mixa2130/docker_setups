@@ -19,7 +19,7 @@ spec:
     spec:
       containers:
         - name: test-api-container
-          image: k8s-demo-app:0.2.0
+          image: k8s-demo-app:0.2.1
           ports:
             - containerPort: 8080
 
@@ -29,6 +29,14 @@ spec:
               value: "0.0.0.0"
             - name: APP_PORT
               value: "8080"
+            - name: DEBUG
+              valueFrom:
+                configMapKeyRef:
+                  name: pg-configmap-env
+                  key: debug_test
+          envFrom:
+            - configMapRef:
+                name: pg-configmap-env
 
           # Resources
           resources:

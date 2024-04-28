@@ -1,35 +1,31 @@
+# Оглавление
 
-Оглавление:
+* [Оглавление](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#оглавление)
+* [Полезные ссылки](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#полезные-ссылки)
+* [Абстракции](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#абстракции)
+    * [Namespace](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#namespace)
+    * [Deployment](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#deployment)
+        * [Resources](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#resources)
+            * [Memory](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#memory)
+            * [CPU](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#cpu)
+            * [Qos class](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#qos-class)
+        * [Secrets](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#secrets)
+            * [ENV](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#env)
+            * [ConfigMap](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#configmap)
+            * [Secrets](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#secrets)
+        * [Health Check](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#health-check)
+            * [httpGET](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#httpget)
+            * [exec](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#exec)
+            * [TCP](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#tcp)
+    * [Service](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#service)
+        * [ClusterIP](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#clusterip)
+        * [NodePort](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#nodeport)
+        * [LoadBalancer](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#loadbalancer)
+        * [ExternalIPs](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#externalips)
+        * [Headless](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#headless)
+    * [Ingress](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#ingress)
+* [k8s dashboard](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#k8s-dashboard)
 
-* [Полезные ссылки](#markdown-header-полезные-ссылки)
-* [Абстракции](#markdown-header-абстракции)
-    * [Namespace](#markdown-header-namespace)
-    * [Deployment](#markdown-header-deployment)
-        * [Resources](#markdown-header-resources)
-            * [Memory](#markdown-header-memory)
-            * [CPU](#markdown-header-cpu)
-            * [Qos class](#markdown-header-qos-class)
-        * [Secrets](#markdown-header-secrets)
-            * [ENV](#markdown-header-env)
-            * [ConfigMap](#markdown-header-configmap)
-            * [Secrets](#markdown-header-secrets)
-        * [Health Check](#markdown-header-health-check)
-            * [httpGET](#markdown-header-httpget)
-            * [exec](#markdown-header-exec)
-            * [TCP](#markdown-header-tcp)
-    * [Service](#markdown-header-service)
-        * [ClusterIP](#markdown-header-clusterip)
-        * [NodePort](#markdown-header-nodeport)
-        * [LoadBalancer](#markdown-header-loadbalancer)
-        * [ExternalIPs](#markdown-header-externalips)
-        * [Headless](#markdown-header-headless)
-    * [Ingress](#markdown-header-ingress)
-    * [k8s dashboard](#markdown-header-k8s-dashboard)
-
-
-# Полезные ссылки
-
-* https://habr.com/ru/companies/ua-hosting/articles/502052/
 
 # Абстракции
 
@@ -351,7 +347,7 @@ TCP, UDP, Websockets, gRPC и тому подобное.
 **Ingress-контроллер** — pod, который реализует правила, описанные в Ingress. По сути, это
 приложение-контроллер/балансировщик, который работает в кластере. Nginx, Haproxy...
 
-## k8s dashboard
+# k8s dashboard
 
 https://alnotes.ru/DevOps/kubernetes/dashboard
 
@@ -363,3 +359,7 @@ kubectl proxy
 UI: http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/#/login
 
 kubectl get secret/admin-user -o jsonpath='{.data.token}' -n kubernetes-dashboard | base64 --decode
+
+# Полезные ссылки
+
+* https://habr.com/ru/companies/ua-hosting/articles/502052/

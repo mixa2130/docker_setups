@@ -15,7 +15,7 @@ BEGIN {
   gsub(/ /,"-",anchor);
   anchor = tolower(anchor);
   {for (i=0;i<subs-1;i++) printf "    " }
-  print "* [" basic_name_no_hash "](#markdown-header-" anchor ")";
+  print "* [" basic_name_no_hash "](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#" anchor ")";
 }
 END {
 }'

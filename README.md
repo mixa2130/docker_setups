@@ -132,71 +132,6 @@ docker exec -ti 44bf2e32249f /bin/bash
 
 ## Абстракции
 
-*Pod* - это объединение из нескольких контейнеров. Даже если нам нужно запустить всего один - кубер поднимет минимум 2.
-![k8s_pod.png](readme_photos%2Fk8s_pod.png)
-
-container Pod несёт в себе linux network namespace. Причём он запускается первым, а потом уже подтягивается приложение.
-
-*Replica set* - то, что позволяет подам внутри кластера масштабироваться.
-Абстракция над подом, которая позволяет создавать новые поды по заданному шаблону.
-![k8s_replicaset.png](readme_photos%2Fk8s_replicaset.png)
-
-Обновив шаблон в replicaset - изменения не применятся сразу же, а будут применяться уже к новым подам.
-
-Пример описания ReplicaSet:
-
-~~~yaml
-apiVersion: apps/v1
-kind: ReplicaSet
-metadata:
-  name: frontend
-  labels:
-    app: guestbook
-    tier: frontend
-spec:
-  replicas: 3
-  selector:
-    matchLabels:
-      tier: frontend
-    matchExpressions:
-      - { key: tier, operator: In, values: [ frontend ] }
-  template:
-    metadata:
-      labels:
-        app: guestbook
-        tier: frontend
-    spec:
-      containers:
-        - name: php-redis
-          image: gcr.io/google_samples/gb-frontend:v3
-          resources:
-            requests:
-              cpu: 100m
-              memory: 100Mi
-          env:
-            - name: GET_HOSTS_FROM
-              value: env
-          ports:
-            - containerPort: 80
-~~~
-
-Предложенный манифест можно сохранить в файл frontend.yaml и запустить в кластере Kubernetes с помощью утилиты командной
-строки:
-
-~~~bash
-kubectl create -f frontend.yaml
-~~~
-
-*Deployment* - абстракция более высокого уровня, которая управляет ReplicaSet и предоставляет расширенный
-функционал управления контейнерами.
-
-Контроллер развертывания (Deployment controller) предоставляет возможность декларативного обновления для объектов типа
-поды (Pods) и наборы реплик (ReplicaSets). Давайте разберемся!
-
-Достаточно описать желаемое состояние [подов/реплик] в объекте Deployment, после чего контроллер развертывания изменит
-текущее состояние объектов на желаемое в контролируемом режиме. Стоит отметить, что при манипуляциях с развертываниями (
-Deployments) нам не нужно беспокоиться об управлении наборами реплик (ReplicaSets) - все необходимое будет выполнено
-непосредственно контроллером развертывания.
 
 ### Rolling update
 
@@ -223,7 +158,6 @@ maxUnavailable. Одну старую реплику можно удалить.
 maxSurge: 1
 maxUnavailable: 0
 ~~~
-
 
 
 ~~~yaml

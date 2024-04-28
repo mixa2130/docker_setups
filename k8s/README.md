@@ -2,6 +2,7 @@
 
 * [Оглавление](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#оглавление)
 * [Абстракции](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#абстракции)
+    * [Pod](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#pod)
     * [Namespace](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#namespace)
     * [Deployment](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#deployment)
         * [Resources](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#resources)
@@ -27,8 +28,6 @@
 * [k8s dashboard](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#k8s-dashboard)
 * [Полезные ссылки](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#полезные-ссылки)
 
-
-
 # Абстракции
 
 * Namespace — пространство имен. Объекты могут взаимодействовать, только если находятся в одном namespace. С помощью
@@ -53,6 +52,10 @@
 * HorizontalPodAutoscaler — объект, предназначенный для автоматического изменения количества подов в зависимости от их
   загруженности.
 
+## Pod
+
+container Pod несёт в себе linux network namespace. Причём он запускается первым, а потом уже подтягивается приложение.
+
 <img src="images/k8s_pod.png" width="570" height="340" />
 
 ## Namespace
@@ -62,6 +65,11 @@ kubectl create namespace coolapp
 ~~~
 
 ## Deployment
+
+Достаточно описать желаемое состояние [подов/реплик] в объекте Deployment, после чего контроллер развертывания изменит
+текущее состояние объектов на желаемое в контролируемом режиме. Стоит отметить, что при манипуляциях с развертываниями (
+Deployments) нам не нужно беспокоиться об управлении наборами реплик (ReplicaSets) - все необходимое будет выполнено
+непосредственно контроллером развертывания.
 
 ### Resources
 
@@ -181,7 +189,6 @@ secret лишь кодирует пароль, а не шифрует:
 
 <img src="images/k8s_secrets.png" width="670" height="340" />
 
-
 ### Health Check
 
 * Startup Probe - Проба запуска
@@ -203,6 +210,7 @@ secret лишь кодирует пароль, а не шифрует:
 * TCPsocket - проверка на существование сокета
 
 #### httpGET
+
 ~~~yaml
 livenessProbe:
   httpGet:

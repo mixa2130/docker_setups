@@ -2,6 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: test-api-deployment
+  namespace: coolapp
 spec:
   replicas: 2
 
@@ -21,6 +22,13 @@ spec:
           image: k8s-demo-app:0.2.0
           ports:
             - containerPort: 8080
+
+          # Environment
+          env:
+            - name: APP_HOST
+              value: "0.0.0.0"
+            - name: APP_PORT
+              value: "8080"
 
           # Resources
           resources:

@@ -30,7 +30,9 @@ https://habr.com/ru/companies/ua-hosting/articles/502052/
 
 ## Namespace
 
-
+~~~
+kubectl create namespace coolapp
+~~~
 
 ## Deployment
 
@@ -40,7 +42,6 @@ https://habr.com/ru/companies/ua-hosting/articles/502052/
 приведёт к перезапуску pod. Request помогает распределить наши поды по нодам.
 
 <img src="images/docker_resources.png" width="570" height="340" />
-
 
 #### Memory
 
@@ -90,6 +91,30 @@ cpu-quota — количество микросекунд внутри cpu-perio
 
 Что произойдет, если установить недостаточный лимит CPU?
 Поскольку ресурс CPU регулируемый, то включится троттлинг.
+
+#### Qos class
+
+Можно посмотреть в describe пода. Выставляется в зависимости от того какие ресурсы проставлены.
+
+* Guaranteed - request и limit равны между собой, поду гарантируются ресурсы.
+* Burstable - request < limit, в каких-то случаях приложение может использовать больше ресурсов чем запрошено.
+* BestEffort - нет лимитов для приложений
+
+О чём говорит класс? В итоге получается, что если у нас мало ресурсов на ноде и надо их частично освободить, то с
+большей вероятностью уйдут BestEffort, чем Guaranteed. Но если ресурсов совсем не хватает, то уйдут и поды
+гарантированного класса.
+
+### Secrets
+
+#### ENV
+
+~~~yaml
+template:
+  containers:
+    env:
+      - name: TEST
+        value: foo
+~~~
 
 ### Health Check
 
@@ -180,7 +205,7 @@ ClusterIP — сервис Kubernetes по умолчанию. Он обеспе
 Однако можно открыть порт:
 
 ~~~bash
-kubectl port-forward service/{service-name} 10000:80 
+kubectl port-forward service/{service-name} 10000:80 -n coolapp
 # 10000 - порт на localhost
 # 80 - port в service на который надо принимать трафик
 ~~~

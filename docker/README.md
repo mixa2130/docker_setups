@@ -183,58 +183,6 @@ spec:
 
 
 
-## volumes
-
-### HostPath
-
-![hostpath.png](readme_photos%2Fvolumes%2Fhostpath.png)
-
-*Самый опасный вариант*
-
-~~~
-spec:
-      containers:
-      - image: nginx:1.20
-        name: nginx
-        ports:
-        - containerPort: 80
-        resources:
-          requests:
-            cpu: 50m
-            memory: 100Mi
-          limits:
-            cpu: 100m
-            memory: 100Mi
-        volumeMounts:
-        - name: data
-          mountPath: /files
-      volumes:
-      - name: data
-        hostPath:
-          path: /data_pod
-
-~~~
-
-### EmptyDir
-
-Автоматически создаваемая папка где-то на сервере под контейнер, чтобы записывать туда данные.
-Каталог существует пока существует Pod. При удалении pod-a удалится и директория.
-
-~~~yaml
-volumeMounts:
-  - name: data
-    mountPath: /files
-  volumes:
-    - name: data
-      emptyDir: { }
-~~~
-
-### PV/PVC - persistent volume
-
-Для подключения внешнего хранилища
-
-![pv.png](readme_photos%2Fvolumes%2Fpv.png)
-
 ## Структура Pod-а
 
 В общем виде можно выделить 4 вида дополнительных «полезных» контейнеров:

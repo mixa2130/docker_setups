@@ -1,6 +1,5 @@
 # Оглавление
 
-* [Оглавление](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#оглавление)
 * [Абстракции](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#абстракции)
     * [Pod](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#pod)
     * [Namespace](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#namespace)
@@ -383,6 +382,83 @@ TCP, UDP, Websockets, gRPC и тому подобное.
 
 **Ingress-контроллер** — pod, который реализует правила, описанные в Ingress. По сути, это
 приложение-контроллер/балансировщик, который работает в кластере. Nginx, Haproxy...
+
+# Хранение данных
+
+## Volumes
+
+### PV - persistent volume
+
+* Storage class: хранит параметры подключения
+* PersistentVolumeClaim: описывает требования к тому
+* PersistentVolume: хранит параметры и статус тома
+
+<img src="images/pv1.png" width="525" height="500" />
+<img src="images/pv2.png" width="525" height="500" />
+
+Во 2м случае Pod заберёт весь PV на 100gb, несмотря на то, что ему нужно только 50gb
+
+~~~yaml
+volumes:
+  - name: mypd
+    persistentVolumeClaim:
+      claimName: myclaim
+~~~
+
+#### PV Provisioners
+
+Следит за PVC-ми и автоматически ходит в хранилище, размечая PV по запросам пользователя
+
+<img src="images/provisioner.png" width="725" height="300" />
+
+
+### EmptyDir
+
+Автоматически создаваемая папка где-то на сервере под контейнер, чтобы записывать туда данные.
+Каталог существует пока существует Pod. При удалении pod-a удалится и директория. Полезный volume для временного
+хранилища данных, доступного между контейнерами в Pod-e.
+
+~~~yaml
+spec:
+  containers:
+
+    volumeMounts:
+      - name: data
+        mountPath: /files
+
+  volumes:
+    - name: data
+      emptyDir: { }
+~~~
+
+### HostPath
+
+Монтируем директорию с ноды кластера
+
+*Самый опасный вариант*
+
+~~~yaml
+spec:
+
+  containers:
+    - image: nginx:1.20
+      name: nginx
+
+      ports:
+        - containerPort: 80
+
+      resources:
+        ...
+
+      volumeMounts:
+        - name: data
+          mountPath: /files # куда примонтировать в контейнере
+
+  volumes:
+    - name: data
+      hostPath:
+        path: /data_pod # какой каталог монтируем в контейнер
+~~~
 
 # k8s dashboard
 

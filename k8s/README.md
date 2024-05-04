@@ -1,9 +1,15 @@
 # Оглавление
 
+* [Оглавление](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#оглавление)
 * [Абстракции](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#абстракции)
     * [Pod](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#pod)
     * [Namespace](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#namespace)
     * [Deployment](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#deployment)
+        * [Стратегии деплоя](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#стратегии-деплоя)
+            * [Rolling update](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#rolling-update)
+            * [Recreate](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#recreate)
+            * [Blue/Green](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#blue/green)
+            * [Canary](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#canary)
         * [Resources](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#resources)
             * [Memory](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#memory)
             * [CPU](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#cpu)
@@ -24,8 +30,15 @@
         * [ExternalIPs](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#externalips)
         * [Headless](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#headless)
     * [Ingress](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#ingress)
+* [Хранение данных](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#хранение-данных)
+    * [Volumes](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#volumes)
+        * [PV - persistent volume](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#pv---persistent-volume)
+            * [PV Provisioners](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#pv-provisioners)
+        * [EmptyDir](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#emptydir)
+        * [HostPath](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#hostpath)
 * [k8s dashboard](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#k8s-dashboard)
 * [Полезные ссылки](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#полезные-ссылки)
+
 
 # Абстракции
 
@@ -70,12 +83,81 @@ kubectl create namespace coolapp
 Deployments) нам не нужно беспокоиться об управлении наборами реплик (ReplicaSets) - все необходимое будет выполнено
 непосредственно контроллером развертывания.
 
+### Стратегии деплоя
+
+#### Rolling update
+
+Это стандартная стратегия развертывания в Kubernetes. Она постепенно, один за другим, заменяет pod'ы со старой версией
+приложения на pod'ы с новой версией — без простоя кластера. Kubernetes дожидается готовности новых pod'ов к работе,
+проверяя их с помощью readiness probe, прежде чем приступить к сворачиванию старых.
+
+<img src="images/rolling_update_strategy.png" width="570" height="340" />
+
+То есть у нас существуют старые реплики, какое-то их количество гасится, на их место поднимаются новые реплики. Новые
+постепенно занимают старые и тд, поэтому замена происходит бесшовно, незаметно для пользователя.
+
+~~~yaml
+spec:
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
+~~~
+
+* maxUnavailable - максимальное количество Pod-в, которые могут быть недоступны во время обновления. По умолчанию - 25%.
+* maxSurge - максимальное количество Pod-в, которое может быть создано сверх желаемого количества подов, описанного в
+  Deployment replicas. По умолчанию - 25%.
+
+Значение указывается или в %-х, или в int.
+
+А если 1 реплика? Как сделать обновление без downtime?
+
+~~~yaml
+maxSurge: 1
+maxUnavailable: 0
+~~~
+
+#### Recreate
+
+В этом простейшем типе развертывания старые pod'ы убиваются все разом и заменяются новыми:
+
+<img src="images/recreate_strategy.png" width="570" height="340" />
+
+~~~yaml
+spec:
+  replicas: 3
+  strategy:
+    type: Recreate
+  template:
+    ...
+~~~
+
+#### Blue/Green
+
+https://www.unixarena.com/2023/04/kubernetes-how-blue-green-deployment-works.html/
+
+Стратегия сине-зеленого развертывания (иногда ее ещё называют red/black, т.е. красно-чёрной) предусматривает
+одновременное развертывание старой (зеленой) и новой (синей) версий приложения. После размещения обеих версий обычные
+пользователи получают доступ к зеленой, в то время как синяя доступна для QA-команды для автоматизации тестов через
+отдельный сервис или прямой проброс портов:
+
+<img src="images/blue_green_strategy.png" width="570" height="340" />
+<img src="images/blue_green_strategy2.png" width="570" height="440" />
+
+#### Canary
+
+Эта стратегия применяется, когда необходимо испытать некую новую функциональность, как правило, в бэкенде приложения.
+Суть подхода в том, чтобы создать два практически одинаковых сервера: один обслуживает почти всех пользователей, а
+другой, с новыми функциями, обслуживает лишь небольшую подгруппу пользователей, после чего результаты их работы
+сравниваются. Если все проходит без ошибок, новая версия постепенно выкатывается на всю инфраструктуру.
+
 ### Resources
 
 Если Pod попробует использовать ресурсов больше чем указано в limit-е - придёт oom killer и убьёт приложение, что
 приведёт к перезапуску pod. Request помогает распределить наши поды по нодам.
 
-<img src="images/docker_resources.png" width="570" height="340" />
+<img src="images/docker_resources.png" width="570" height="400" />
 
 #### Memory
 
@@ -411,7 +493,6 @@ volumes:
 
 <img src="images/provisioner.png" width="725" height="300" />
 
-
 ### EmptyDir
 
 Автоматически создаваемая папка где-то на сервере под контейнер, чтобы записывать туда данные.
@@ -476,3 +557,4 @@ kubectl get secret/admin-user -o jsonpath='{.data.token}' -n kubernetes-dashboar
 # Полезные ссылки
 
 * https://habr.com/ru/companies/ua-hosting/articles/502052/
+* https://codefresh.io/learn/software-deployment/what-is-blue-green-deployment

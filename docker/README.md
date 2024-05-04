@@ -130,59 +130,6 @@ docker exec -ti 44bf2e32249f /bin/bash
 
 # k8s
 
-## Абстракции
-
-
-### Rolling update
-
-A rolling update allows a Deployment update to take place with zero downtime. It does this by incrementally replacing
-the current Pods with new ones . The new Pods are scheduled on Nodes with available resources, and Kubernetes waits for
-those new Pods to start before removing the old Pods.
-
-То есть у нас существуют старые реплики, какое-то их количество гасится, на их место поднимаются новые реплики. Новые
-постепенно занимают старые и тд, поэтому замена происходит бесшовно, незаметно для пользователя.
-
-Это стратегия k8s по умолчанию, но процесс обновления в Deployment можно контролировать через .spec.strategy
-
-![k8s_deployment_rolling_update.png](readme_photos%2Fk8s_deployment_rolling_update.png)
-
-maxSurge. Когда начнётся rolling update - мы можем тут же поднять одну новую реплику.
-И в общем количестве иметь replicas+maxSurge.
-maxUnavailable. Одну старую реплику можно удалить.
-При обоих параметрах реплик у нас останется 2: одна новая и одна старая.
-
-Можно указывать в %х.
-А если 1 реплика? как сделать обновление без downtime?
-
-~~~yaml
-maxSurge: 1
-maxUnavailable: 0
-~~~
-
-
-~~~yaml
-apiVersion: apps/v1
-kind: Deployment
-metadata:
-  name: my-deployment
-spec:
-  replicas: 1
-  selector:
-    matchLabels:
-      app: my-app
-  strategy:
-    rollingUpdate:
-      maxSurge: 1
-      maxUnavailable: 1
-    type: RollingUpdate
-  template:
-    metadata:
-      labels:
-        app: my-app
-~~~
-
-
-
 ## Структура Pod-а
 
 В общем виде можно выделить 4 вида дополнительных «полезных» контейнеров:

@@ -3,20 +3,31 @@ kind: Deployment
 metadata:
   name: test-api-deployment
   namespace: coolapp
+
 spec:
   replicas: 2
+
+  # Стратегия обновления
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 25%
+      maxUnavailable: 25%
 
   selector: # будет считать своими Pod-ми все Pod-ы с этой меткой
     matchLabels: # метка для группировки
       app: test-api
+      version: v1
 
   template: # Шаблон Pod-в
 
     metadata: # все создаваемые Pod-ы будет иметь эту метку
       labels:
         app: test-api
+        version: v1 #эта метка по которой сможем отслеживать нашу версию
 
     spec:
+
       containers:
         - name: test-api-container
           image: k8s-demo-app:0.2.2

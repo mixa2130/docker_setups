@@ -39,7 +39,6 @@
 * [k8s dashboard](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#k8s-dashboard)
 * [Полезные ссылки](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#полезные-ссылки)
 
-
 # Абстракции
 
 * Namespace — пространство имен. Объекты могут взаимодействовать, только если находятся в одном namespace. С помощью
@@ -541,6 +540,57 @@ spec:
         path: /data_pod # какой каталог монтируем в контейнер
 ~~~
 
+# Устройство кластера
+
+На master ноде, работают в Docker:
+
+* etcd - центральная БД k8s
+* API server - центральный компонент k8s. Единственный кто общается с Etcd напрямую. Работает по REST
+* Controller-manager - набор контроллеров. Replicaset controller, Node controller, Endpoints controller, Garbage
+  controller(сборщик мусора). Работает на основе событий, а не по указке API server.
+* Scheduler - назначает Pod-ы на ноды, учитывая: Qos, resources и тд
+
+На каждой ноде:
+
+* Kubelet — это компонент на узле Kubernetes, который следит за тем, чтобы контейнеры в подах были запущены и
+  функционировали правильно. Отдаёт команды Docker daemon. Создаёт Pod-ы, делает probe. Отправляет ping-и для Node
+  controller manager.
+* Kube-proxy - занимается управлением сетевым трафиком между подами и внешним миром. Он обеспечивает часть сетевого
+  уровня, которая позволяет сетевому взаимодействию между различными подами и предоставляет маршрутизацию трафика к
+  сервисам, определённым в кластере. Реализует абстракцию Service.
+
+<img src="images/cluster_structure.png" width="625" height="450" />
+
+# Oneshot задачи
+
+CronJob -> Job -> Pod
+
+## Job
+
+* Создаёт Pod для выполнения задачи
+* Перезапускает Pod до успешного выполнения задачи или истечения timeout-в
+    * `activeDeadLineSeconds`
+    * `backoffLimit`
+
+*Контейнеры Job-в продолжают висеть по окончанию выполнения задачи. Pod-ы созданные Job-м продолжают висеть в статусе
+stopped*
+
+В Kubernetes есть специальный TTL Controller, который умеет удалять завершенные Job вместе с подами. Вот только он
+появился в версии 1.12 и до сих пор находится в статусе alpha, поэтому его необходимо включать с помощью
+соответствующего feature gate TTLAfterFinished.
+
+`ttlSecondsAfterFinished` — указывает, через сколько секунд специальный TimeToLive контроллер должен удалить завершившийся
+Job вместе с подами и их логами.
+
+## CronJob
+
+* Создает Job по расписанию
+* Важные параметры
+  * `startingDeadlineSeconds` - отсрочка выполнения в случае временных трудностей (задержек на разворачивание и тд)
+  * `concurrencyPolicy`
+  * `successfulJobsHistoryLimit` - сколько успешных job-в оставлять. По умолчанию - 3
+  * `failedJobsHistoryLimit` - сколько сбойных Job-в оставлять
+
 # k8s dashboard
 
 https://alnotes.ru/DevOps/kubernetes/dashboard
@@ -558,3 +608,38 @@ kubectl get secret/admin-user -o jsonpath='{.data.token}' -n kubernetes-dashboar
 
 * https://habr.com/ru/companies/ua-hosting/articles/502052/
 * https://codefresh.io/learn/software-deployment/what-is-blue-green-deployment
+
+# Шпаргалка по командам
+
+~~~
+kubectl get pod -n {ns}
+kubectl get ns
+~~~
+
+Справка об объекте k8s:
+
+~~~
+kubectl explain {job/pod...}
+kubectl explain job.spec
+~~~
+
+Логи:
+
+~~~
+kubectl logs {имя объекта}
+kubectl logs hello-nr4bq
+~~~
+
+Описание созданного объекта, что пошло не так и тд:
+
+~~~
+kubectl describe {абстракция} {название}
+kubectl describe pod hello-2d5fb
+~~~
+
+Удалить объект(удаляет каскадно):
+
+~~~
+kubectl delete {абстракция} {имя}
+kubectl delete job hello 
+~~~

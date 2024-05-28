@@ -1,0 +1,22 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: hello
+spec:
+
+  backoffLimit: 2 # количество попыток
+  activeDeadlineSeconds: 60 # время, за которое Job должен выполниться успешно
+  ttlSecondsAfterFinished: 100 # через сколько сек удалить завершившийся Job вместе с Pod-ми и логами
+
+  template:
+    spec:
+      containers:
+        - name: hello
+          image: busybox
+          args:
+            - /bin/sh
+            - -c
+            - date; echo Hello from the Kubernetes cluster
+            -
+      restartPolicy: Never # по-умолчанию always
+

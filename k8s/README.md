@@ -579,17 +579,38 @@ stopped*
 появился в версии 1.12 и до сих пор находится в статусе alpha, поэтому его необходимо включать с помощью
 соответствующего feature gate TTLAfterFinished.
 
-`ttlSecondsAfterFinished` — указывает, через сколько секунд специальный TimeToLive контроллер должен удалить завершившийся
+`ttlSecondsAfterFinished` — указывает, через сколько секунд специальный TimeToLive контроллер должен удалить
+завершившийся
 Job вместе с подами и их логами.
 
 ## CronJob
 
 * Создает Job по расписанию
 * Важные параметры
-  * `startingDeadlineSeconds` - отсрочка выполнения в случае временных трудностей (задержек на разворачивание и тд)
-  * `concurrencyPolicy`
-  * `successfulJobsHistoryLimit` - сколько успешных job-в оставлять. По умолчанию - 3
-  * `failedJobsHistoryLimit` - сколько сбойных Job-в оставлять
+    * `startingDeadlineSeconds` - отсрочка выполнения в случае временных трудностей (задержек на разворачивание и тд)
+    * `concurrencyPolicy`
+    * `successfulJobsHistoryLimit` - сколько успешных job-в оставлять. По умолчанию - 3
+    * `failedJobsHistoryLimit` - сколько сбойных Job-в оставлять
+
+# DaemonSet
+
+Хорошо подходит для агентов мониторинга
+
+* Запускает по одному Pod-у на каждом сервере кластера.
+* При добавлении ноды – добавляет под
+* При удалении ноды GC удаляет под
+* Описание практически полностью соответствует Deployment
+
+## Tolerations
+
+Иногда не на все ноды нужно запускать демоны. Например, ноды с GPU.
+Или мы не хотим запускать приложения на master ноды
+
+~~~yaml
+      tolerations:
+        - effect: NoSchedule
+          key: node-role.kubernetes.io/ingress
+~~~
 
 # k8s dashboard
 
@@ -613,7 +634,9 @@ kubectl get secret/admin-user -o jsonpath='{.data.token}' -n kubernetes-dashboar
 
 ~~~
 kubectl get pod -n {ns}
+kubectl get pod -o wide
 kubectl get ns
+kubectl get nodes
 ~~~
 
 Справка об объекте k8s:
@@ -626,7 +649,7 @@ kubectl explain job.spec
 Логи:
 
 ~~~
-kubectl logs {имя объекта}
+kubectl logs {имя объекта} {--previous} 
 kubectl logs hello-nr4bq
 ~~~
 
@@ -637,9 +660,16 @@ kubectl describe {абстракция} {название}
 kubectl describe pod hello-2d5fb
 ~~~
 
+События в namespace:
+
+~~~
+kubectl get events
+~~~
+
 Удалить объект(удаляет каскадно):
 
 ~~~
 kubectl delete {абстракция} {имя}
 kubectl delete job hello 
 ~~~
+

@@ -34,6 +34,8 @@ spec:
           ports:
             - containerPort: 8080
 
+          terminationMessagePolicy: FallbackToLogsOnError # выведет в describe последние 80 строчек или 2кб логов
+
           # Environment
           env:
             - name: APP_HOST

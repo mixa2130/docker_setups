@@ -6,6 +6,48 @@
 
 # SQL
 
+## Фичи
+
+### Coalesce
+
+The COALESCE() function accepts a list of arguments and returns the first non-null argument.
+
+~~~postgresql
+SELECT coalesce(
+               ROUND(cnt * 1.0 / all_cnt, 2),
+               0) 
+~~~
+Если ROUND вернёт NULL, то он заменится на 0.
+
+### CASE WHEN
+
+~~~sql
+select sum(
+               case
+                   when student_id is not NULL
+                       THEN 1
+                   ELSE 0
+                   END)
+           as attended_exams
+~~~
+
+### CTE
+
+Use only at PostgreSQL 12+
+
+[PostgreSQL 11 issue](https://hakibenita.com/be-careful-with-cte-in-postgre-sql)
+
+~~~postgresql
+WITH cte_products_wt_dates AS (SELECT product_id,
+                                      MAX(change_date) as change_date
+                               FROM Products
+                               WHERE change_date <= '2019-08-17'
+                               GROUP BY product_id),
+     cte_default_prices AS (SELECT DISTINCT product_id,
+                                            10 as price
+                            FROM Products)
+~~~
+
 ## Оконные функции
 
 ~~~sql
@@ -110,3 +152,21 @@ Dense_Rank:
 
 ### Rolling Sum
 
+~~~sql
+SELECT person_name,
+       SUM(weight) OVER (
+           ORDER BY turn
+           ROWS BETWEEN UNBOUNDED PRECEDING AND CURRENT ROW) as rolling_sum
+FROM Queue
+~~~
+
+~~~
+| person_name | weight | rolling_sum |
+| ----------- | ------ | ----------- |
+| Alice       | 250    | 250         |
+| Alex        | 350    | 600         |
+| John Cena   | 400    | 1000        |
+| Marie       | 200    | 1200        |
+| Bob         | 175    | 1375        |
+| Winston     | 500    | 1875        |
+~~~

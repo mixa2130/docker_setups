@@ -141,7 +141,7 @@ https://www.unixarena.com/2023/04/kubernetes-how-blue-green-deployment-works.htm
 пользователи получают доступ к зеленой, в то время как синяя доступна для QA-команды для автоматизации тестов через
 отдельный сервис или прямой проброс портов:
 
-<img src="images/blue_green_strategy.png" width="570" height="340" />
+ 
 <img src="images/blue_green_strategy2.png" width="570" height="440" />
 
 #### Canary

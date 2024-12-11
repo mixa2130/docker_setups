@@ -8,6 +8,52 @@
 
 ## Фичи
 
+### Record
+
+~~~
+postgres=# SELECT table1 FROM table1;
+ table1  
+---------
+ (1,2,3)
+ (2,3,4)
+~~~
+
+Все строки, значения которых нету во второй таблице:
+
+~~~postgresql
+SELECT * 
+FROM table1 
+WHERE NOT EXISTS (
+    SELECT * 
+    FROM table2 
+    WHERE
+        table2 = table1
+)
+~~~
+
+### Unnest
+
+Создаст атрибут из массива
+
+~~~postgresql
+INSERT INTO important_user_table 
+(id, date_added, status_id)
+SELECT
+     unnest(array[100, 110, 153, 100500]), '2015-01-01', 3;
+~~~
+
+что <=>
+
+~~~postgresql
+INSERT INTO important_user_table
+(id, date_added, status_id)
+VALUES
+(100, '2015-01-01', 3),
+(110, '2015-01-01', 3),
+(153, '2015-01-01', 3),
+(100500, '2015-01-01', 3);
+~~~
+
 ### Coalesce
 
 The COALESCE() function accepts a list of arguments and returns the first non-null argument.
@@ -17,6 +63,7 @@ SELECT coalesce(
                ROUND(cnt * 1.0 / all_cnt, 2),
                0) 
 ~~~
+
 Если ROUND вернёт NULL, то он заменится на 0.
 
 ### CASE WHEN
@@ -46,6 +93,22 @@ WITH cte_products_wt_dates AS (SELECT product_id,
      cte_default_prices AS (SELECT DISTINCT product_id,
                                             10 as price
                             FROM Products)
+~~~
+
+### Выбор из массива данных, а не из таблицы
+
+~~~postgresql
+SELECT * FROM (
+    VALUES (1, 'one'), (2, 'two'), (3, 'three')
+) as t (digit_number, string_number);
+~~~
+
+~~~
+ digit_number | string_number 
+--------------+---------------
+            1 | one
+            2 | two
+            3 | three
 ~~~
 
 ## Оконные функции
@@ -139,7 +202,6 @@ Dense_Rank:
 
 <img src="images/ntile.png" width="770" height="570" />
 
-
 #### LAG и LEAD
 
 Просто берёт предыдущую строку:
@@ -170,3 +232,10 @@ FROM Queue
 | Bob         | 175    | 1375        |
 | Winston     | 500    | 1875        |
 ~~~
+
++-------------+------+
+| category | accounts_count|
++-------------+------+
+| 1 | 0 |
+| 2 | 0 |
++-------------+------+

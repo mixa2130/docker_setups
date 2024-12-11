@@ -6,6 +6,21 @@
 
 # SQL
 
+## Работа с датами
+
+~~~postgresql
+SELECT *
+FROM TABLE
+WHERE EXTRACT(month from created_at) = 2
+  AND EXTRACT(year from created_at) = 2020
+~~~
+
+~~~postgresql
+SELECT *
+FROM MovieRating
+WHERE TO_CHAR(created_at, 'yyyy-mm') = '2020-02'
+~~~
+
 ## Фичи
 
 ### Record
@@ -21,14 +36,23 @@ postgres=# SELECT table1 FROM table1;
 Все строки, значения которых нету во второй таблице:
 
 ~~~postgresql
-SELECT * 
-FROM table1 
-WHERE NOT EXISTS (
-    SELECT * 
-    FROM table2 
-    WHERE
-        table2 = table1
-)
+SELECT *
+FROM table1
+WHERE NOT EXISTS (SELECT *
+                  FROM table2
+                  WHERE table2 = table1)
+~~~
+
+### Using
+
+~~~
+JOIN Table2 b ON a.id = b.id
+~~~
+
+<=>
+
+~~~
+JOIN Table2 b USING(id)
 ~~~
 
 ### Unnest
@@ -36,22 +60,22 @@ WHERE NOT EXISTS (
 Создаст атрибут из массива
 
 ~~~postgresql
-INSERT INTO important_user_table 
-(id, date_added, status_id)
-SELECT
-     unnest(array[100, 110, 153, 100500]), '2015-01-01', 3;
+INSERT INTO important_user_table
+    (id, date_added, status_id)
+SELECT unnest(array [100, 110, 153, 100500]),
+       '2015-01-01',
+       3;
 ~~~
 
 что <=>
 
 ~~~postgresql
 INSERT INTO important_user_table
-(id, date_added, status_id)
-VALUES
-(100, '2015-01-01', 3),
-(110, '2015-01-01', 3),
-(153, '2015-01-01', 3),
-(100500, '2015-01-01', 3);
+    (id, date_added, status_id)
+VALUES (100, '2015-01-01', 3),
+       (110, '2015-01-01', 3),
+       (153, '2015-01-01', 3),
+       (100500, '2015-01-01', 3);
 ~~~
 
 ### Coalesce
@@ -71,8 +95,8 @@ SELECT coalesce(
 ~~~sql
 select sum(
                case
-                   when student_id is not NULL
-                       THEN 1
+                   when student_id is not NULL THEN 1
+                   when student_id != 'JAMES' THEN -1
                    ELSE 0
                    END)
            as attended_exams
@@ -98,9 +122,8 @@ WITH cte_products_wt_dates AS (SELECT product_id,
 ### Выбор из массива данных, а не из таблицы
 
 ~~~postgresql
-SELECT * FROM (
-    VALUES (1, 'one'), (2, 'two'), (3, 'three')
-) as t (digit_number, string_number);
+SELECT *
+FROM (VALUES (1, 'one'), (2, 'two'), (3, 'three')) as t (digit_number, string_number);
 ~~~
 
 ~~~
@@ -204,6 +227,8 @@ Dense_Rank:
 
 #### LAG и LEAD
 
+`FUNC(attr, n, default_val)`  где n - это шаг, определяющий количество строк назад
+
 Просто берёт предыдущую строку:
 
 <img src="images/lag_lead.png" width="770" height="570" />
@@ -233,9 +258,57 @@ FROM Queue
 | Winston     | 500    | 1875        |
 ~~~
 
+~~~
 +-------------+------+
 | category | accounts_count|
 +-------------+------+
 | 1 | 0 |
 | 2 | 0 |
 +-------------+------+
+~~~
+
+## Lateral Join
+
+Подзапрос, используемый с LATERAL, выполняется для каждой строки из таблицы, находящейся слева от LATERAL JOIN. Этот
+подзапрос может использовать значения из текущей строки левой таблицы.
+
+~~~postgresql
+SELECT *
+FROM left_table
+JOIN LATERAL (subquery) AS alias ON condition;
+~~~
+
+Представьте, что у нас есть две таблицы:
+	•	users (содержит пользователей)
+	•	orders (содержит заказы, связанные с пользователями)
+
+Если мы хотим получить самый последний заказ для каждого пользователя, без LATERAL это было бы сложнее:
+
+~~~postgresql
+SELECT u.*, o.*
+FROM users u
+JOIN (
+    SELECT DISTINCT ON (user_id) *
+    FROM orders
+    ORDER BY user_id, created_at DESC
+) o ON u.id = o.user_id;
+~~~
+
+С помощью LATERAL мы можем упростить запрос:
+
+~~~postgresql
+SELECT u.*, o.*
+FROM users u
+JOIN LATERAL (
+    SELECT *
+    FROM orders
+    WHERE orders.user_id = u.id
+    ORDER BY created_at DESC
+    LIMIT 1
+) o ON true;
+~~~
+
+Объяснение:
+	* Для каждой строки в users (alias u), подзапрос внутри LATERAL ищет заказы, принадлежащие конкретному пользователю (orders.user_id = u.id).
+	* ORDER BY created_at DESC и LIMIT 1 обеспечивают выбор самого последнего заказа.
+	* ON true используется, так как условие соединения уже реализовано внутри подзапроса.

@@ -36,6 +36,20 @@
             * [PV Provisioners](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#pv-provisioners)
         * [EmptyDir](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#emptydir)
         * [HostPath](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#hostpath)
+* [Устройство кластера](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#устройство-кластера)
+* [Oneshot задачи](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#oneshot-задачи)
+    * [Job](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#job)
+    * [CronJob](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#cronjob)
+* [DaemonSet](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#daemonset)
+    * [Tolerations](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#tolerations)
+* [Настройка кластера](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#настройка-кластера)
+    * [Подключение хранилищ образов registry](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#подключение-хранилищ-образов-registry)
+        * [Создание secret](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#создание-secret)
+            * [Вариант 1](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#вариант-1)
+            * [Вариант 2](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#вариант-2)
+            * [Вариант 3](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#вариант-3)
+        * [Добавление к Deployment](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#добавление-к-deployment)
+        * [Добавление к ServiceAccount](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#добавление-к-serviceaccount)
 * [k8s dashboard](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#k8s-dashboard)
 * [Полезные ссылки](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#полезные-ссылки)
 
@@ -141,7 +155,7 @@ https://www.unixarena.com/2023/04/kubernetes-how-blue-green-deployment-works.htm
 пользователи получают доступ к зеленой, в то время как синяя доступна для QA-команды для автоматизации тестов через
 отдельный сервис или прямой проброс портов:
 
- 
+
 <img src="images/blue_green_strategy2.png" width="570" height="440" />
 
 #### Canary
@@ -624,6 +638,83 @@ kubectl proxy
 UI: http://localhost:8001/api/v1/namespaces/kubernetes-dashboard/services/https:kubernetes-dashboard:/proxy/#/login
 
 kubectl get secret/admin-user -o jsonpath='{.data.token}' -n kubernetes-dashboard | base64 --decode
+
+# Настройка кластера
+
+## Подключение хранилищ образов registry
+
+### Создание secret
+
+В UI: workloads->secrets->create image pull secret
+
+#### Вариант 1
+
+Secret:
+
+~~~yaml
+apiVersion: v1
+kind: Secret
+metadata:
+  name: pull-secret-docker-dev-registry
+  namespace: coolapp
+data:
+  .dockerconfigjson: UmVhbGx5IHJlYWxseSByZWVlZWVlZWVlZWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWFhYWxsbGxsbGxsbGxsbGxsbGxsbGxsbGxsbGxsbGxsbGx5eXl5eXl5eXl5eXl5eXl5eXl5eSBsbGxsbGxsbGxsbGxsbG9vb29vb29vb29vb29vb29vb29vb29vb29vb25ubm5ubm5ubm5ubm5ubm5ubm5ubm5ubmdnZ2dnZ2dnZ2dnZ2dnZ2dnZ2cgYXV0aCBrZXlzCg==
+type: kubernetes.io/dockerconfigjson
+~~~
+
+Применяем:
+
+~~~bash
+kubectl apply -f my_pull_secret.yaml -n <my_namespace>
+~~~
+
+#### Вариант 2
+
+~~~bash
+kubectl create secret docker-registry regcred \
+  --docker-server=<your-registry-server> \
+  --docker-username=<your-name> \
+  --docker-password=<your-pword> \
+  --docker-email=<your-email>
+~~~
+
+#### Вариант 3
+
+~~~bash
+kubectl create secret generic regcred \
+  --from-file=.dockerconfigjson=<path/to/.docker/config.json> \
+  --type=kubernetes.io/dockerconfigjson
+~~~
+
+### Добавление к Deployment
+
+*Только для тестирования!*
+
+~~~yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: registry-ci-example
+spec:
+  containers:
+    - name: filebeat
+      image: registry.delta.sbrf.ru/ci00734898/ci00685811_synapse/filebeat@sha256:e8f9bda1cd74dd6ed118b0d59afd7a6d114366ca8621355430d7c7897f330059
+  imagePullSecrets:
+    - name: image-pull-secret
+~~~
+
+### Добавление к ServiceAccount
+
+Целевой способ: подвязывание секрета к default ServiceAccount 
+
+~~~yaml
+kind: ServiceAccount
+apiVersion: v1
+metadata:
+  name: default
+imagePullSecrets:
+  - name: pull-secret-delta
+~~~
 
 # Полезные ссылки
 

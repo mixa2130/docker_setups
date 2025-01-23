@@ -1,6 +1,5 @@
 # Оглавление
 
-
 # Service Mesh
 
 Service Mesh - это выделенный инфраструктурный слой для обеспечения сетевых коммуникаций между сервисами с
@@ -137,7 +136,6 @@ HTTP-соединений с именем хоста example.com.
 Во внутренний реестр сервисов Istio будет добавлен новый сервис со значением хоста example.com, что наряду с другими
 конфигурациями egress-шлюза позволит Service B совершить исходящий запрос на внешний сервис
 
-
 # Сценарии
 
 # Ingres -> serviceA
@@ -174,7 +172,7 @@ kubectl logs -l app=service-a-app -c istio-proxy
 ### 1. Service для ServiceB
 
 [service.yaml](examples/ingress-serviceA-serviceB/service.yaml)
- 
+
 ### 2. Правила маршрутизации
 
 [vs.yaml](examples/ingress-serviceA-serviceB/vs.yaml)
@@ -190,6 +188,37 @@ kubectl logs -l app=service-a-app -c istio-proxy
 ### 2. Правила маршрутизации
 
 [vs.yaml](examples/ingress-serviceA-serviceB/vs.yaml)
+
+## Egress
+
+![schema.png](examples/egress/schema.png)
+
+Существует 3 подхода к открытию исходящего трафика в Istio:
+
+1) Открытый доступ из любого пода на любой внешний хост по умолчанию - удобный подход для разработки, но не безопасный и
+   не
+   контролируемый, поэтому в промышленной эксплуатации применяется редко.
+
+2) Отсутствие доступа на любой внешний хост исключая те, которые явно указаны в манифесте ServiceEntry.
+
+3) Направление трафика на внешний хост через единый egress шлюз - позволяет обогатить весь исходящий трафик из кластера
+   требуемой логикой (например обогатить заголовками для аутентификации запросов), мониторировать и контролировать его.
+   Данный подход применяться в больших промышленных системах.
+
+### 1. Gateway Egress
+
+В соответствии с этим манифестом новое правило будет работать при вызовах на хост
+`istio-ingressgateway.istio-system.svc.cluster.local` из шлюза `istio-egressgateway`, а также из любого envoy-прокси в
+неймспейсе. 
+Если вызов придёт из любого envoy-прокси в namespace (кроме istio-egressgateway), произойдет его
+перенаправление на хост istio-egressgateway. 
+Если поступит запрос из istio-egressgateway, то он будет направлен на хост
+istio-ingressgateway.istio-system.svc.cluster.local. Таким образом достигается сосредоточение всех исходящих вызовов в
+кластере на шлюз istio-egressgateway.
+
+Теперь исходящий трафик направляется через egress-шлюз и достигает `istio-ingressgateway.istio-system.svc.cluster.local`
+
+*То есть ServiceC обращается к http://istio-ingressgateway.istio-system.svc.cluster.local/service-ext*
 
 # Полезные команды
 

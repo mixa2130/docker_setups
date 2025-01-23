@@ -1,0 +1,15 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: producer-internal-host-vs
+spec:
+  hosts:
+    - producer-internal-host # Виртуальный хост, к которому относится этот VirtualService
+  gateways:
+    - mesh # Указывает, что этот маршрут применяется внутри сервисной сети Istio (без внешнего шлюза)
+  http:
+    - route:
+        - destination:
+            host: producer-internal-host # Направляет трафик на указанный хост (должен существовать как Kubernetes Service)
+            port:
+              number: 80 # Трафик направляется на порт 80 указанного хоста

@@ -1,0 +1,21 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: producer-internal-host-vs
+spec:
+  hosts:
+    - producer-internal-host # Виртуальный хост, к которому применяется этот VirtualService
+  gateways:
+    - mesh # Работает только внутри Istio Service Mesh (без внешнего шлюза)
+  http:
+    - route:
+        - destination:
+            host: producer-internal-host # Направляет трафик на producer-internal-host (это service-b-srv)
+            port:
+              number: 80
+          weight: 50 # 50% запросов пойдут в этот сервис
+        - destination:
+            host: service-c-srv # Направляет трафик на service-c-srv
+            port:
+              number: 80
+          weight: 50 # 50% запросов пойдут в этот сервис

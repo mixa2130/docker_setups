@@ -1,0 +1,14 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: Gateway
+metadata:
+  name: service-a-gw
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+    - port:
+        number: 80 # Порт, выставленный service-м наружу
+        name: http
+        protocol: HTTP
+      hosts:
+        - "*"

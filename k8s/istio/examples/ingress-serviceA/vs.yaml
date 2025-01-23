@@ -1,0 +1,20 @@
+apiVersion: networking.istio.io/v1alpha3  # Версия API Istio для управления трафиком
+kind: VirtualService
+metadata:
+  name: inbound-to-service-a-vs  # Имя VirtualService, используется для идентификации
+spec:
+  hosts:
+    - "*"  # Указывает, что VirtualService применим ко всем хостам (можно ограничить конкретными доменами)
+  gateways:
+    - service-a-gw  # Применяется к шлюзу service-a-gw (определён отдельно в Gateway)
+  http:
+    - match:
+        - uri:
+            exact: /service-a  # На что подменить "/service-a"
+      rewrite:
+        uri: /  # Куда направить из /service-a
+      route:
+        - destination:
+            host: service-a-srv  # Направляет трафик на Kubernetes Service "service-a-srv"
+            port:
+              number: 80  # Порт, на который направляется трафик

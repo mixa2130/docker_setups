@@ -2,6 +2,7 @@
 * [SQL](https://github.com/mixa2130/docker_setups/blob/master/postgresql/README.md#sql)
     * [Работа с датами](https://github.com/mixa2130/docker_setups/blob/master/postgresql/README.md#работа-с-датами)
     * [Фичи](https://github.com/mixa2130/docker_setups/blob/master/postgresql/README.md#фичи)
+        * [LEFT AND RIGHT](https://github.com/mixa2130/docker_setups/blob/master/postgresql/README.md#left-and-right)
         * [Record](https://github.com/mixa2130/docker_setups/blob/master/postgresql/README.md#record)
         * [Using](https://github.com/mixa2130/docker_setups/blob/master/postgresql/README.md#using)
         * [Unnest](https://github.com/mixa2130/docker_setups/blob/master/postgresql/README.md#unnest)
@@ -18,6 +19,8 @@
             * [LAG и LEAD](https://github.com/mixa2130/docker_setups/blob/master/postgresql/README.md#lag-и-lead)
         * [Rolling Sum](https://github.com/mixa2130/docker_setups/blob/master/postgresql/README.md#rolling-sum)
     * [Lateral Join](https://github.com/mixa2130/docker_setups/blob/master/postgresql/README.md#lateral-join)
+* [Интересные подходы к решению задач](https://github.com/mixa2130/docker_setups/blob/master/postgresql/README.md#интересные-подходы-к-решению-задач)
+    * [Скользящее окно без оконной функции](https://github.com/mixa2130/docker_setups/blob/master/postgresql/README.md#скользящее-окно-без-оконной-функции)
 
 # Patroni
 
@@ -61,20 +64,22 @@ FROM smth
 ### LEFT AND RIGHT
 
 ~~~sql
-LEFT(string, number_of_characters)
-RIGHT(string, number_of_characters)
+LEFT
+    (string, number_of_characters)
+    RIGHT
+    (string, number_of_characters)
 ~~~
+
 * `string`: The text string whose leftmost or rightmost characters you want to extract. This can be a field name or a
-literal string.
-* `number_of_characters`: This is a positive integer that dictates how many characters from the start (left) or end (right)
-of the text string will be extracted.
+  literal string.
+* `number_of_characters`: This is a positive integer that dictates how many characters from the start (left) or end (
+  right)
+  of the text string will be extracted.
 
 ~~~postgresql
-SELECT 
-    LEFT('MARRY ANN', 1)
+SELECT LEFT('MARRY ANN', 1)
 -- M
 ~~~
-
 
 ### Record
 

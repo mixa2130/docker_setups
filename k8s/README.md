@@ -1,6 +1,3 @@
-# Оглавление
-
-* [Оглавление](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#оглавление)
 * [Абстракции](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#абстракции)
     * [Pod](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#pod)
     * [Namespace](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#namespace)
@@ -42,6 +39,7 @@
     * [CronJob](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#cronjob)
 * [DaemonSet](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#daemonset)
     * [Tolerations](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#tolerations)
+* [k8s dashboard](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#k8s-dashboard)
 * [Настройка кластера](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#настройка-кластера)
     * [Подключение хранилищ образов registry](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#подключение-хранилищ-образов-registry)
         * [Создание secret](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#создание-secret)
@@ -50,8 +48,9 @@
             * [Вариант 3](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#вариант-3)
         * [Добавление к Deployment](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#добавление-к-deployment)
         * [Добавление к ServiceAccount](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#добавление-к-serviceaccount)
-* [k8s dashboard](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#k8s-dashboard)
 * [Полезные ссылки](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#полезные-ссылки)
+* [Шпаргалка по командам](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#шпаргалка-по-командам)
+    * [Отладка](https://github.com/mixa2130/docker_setups/blob/master/k8s/README.md#отладка-)
 
 # Абстракции
 
@@ -705,7 +704,7 @@ spec:
 
 ### Добавление к ServiceAccount
 
-Целевой способ: подвязывание секрета к default ServiceAccount 
+Целевой способ: подвязывание секрета к default ServiceAccount
 
 ~~~yaml
 kind: ServiceAccount
@@ -737,12 +736,6 @@ kubectl explain {job/pod...}
 kubectl explain job.spec
 ~~~
 
-
-
-
-
-
-
 Удалить объект(удаляет каскадно):
 
 ~~~
@@ -750,7 +743,7 @@ kubectl delete {абстракция} {имя}
 kubectl delete job hello 
 ~~~
 
-## Отладка 
+## Отладка
 
 Почему Pod-ы не стартуют?
 что пошло не так?

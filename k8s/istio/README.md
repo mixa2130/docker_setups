@@ -1,4 +1,29 @@
-# Оглавление
+* [Service Mesh](https://github.com/mixa2130/docker_setups/blob/master/k8s/istio/README.md#service-mesh)
+* [Istio](https://github.com/mixa2130/docker_setups/blob/master/k8s/istio/README.md#istio)
+    * [Архитектура](https://github.com/mixa2130/docker_setups/blob/master/k8s/istio/README.md#архитектура)
+        * [Gateway](https://github.com/mixa2130/docker_setups/blob/master/k8s/istio/README.md#gateway)
+            * [Отличие от k8s Ingress](https://github.com/mixa2130/docker_setups/blob/master/k8s/istio/README.md#отличие-от-k8s-ingress)
+            * [Пример](https://github.com/mixa2130/docker_setups/blob/master/k8s/istio/README.md#пример)
+        * [VirtualService](https://github.com/mixa2130/docker_setups/blob/master/k8s/istio/README.md#virtualservice)
+        * [DestinationRule](https://github.com/mixa2130/docker_setups/blob/master/k8s/istio/README.md#destinationrule)
+        * [ServiceEntry](https://github.com/mixa2130/docker_setups/blob/master/k8s/istio/README.md#serviceentry)
+* [Ingres -> serviceA](https://github.com/mixa2130/docker_setups/blob/master/k8s/istio/README.md#ingres-->-servicea)
+    * [Маршрутизация входящего трафика в ServiceA](https://github.com/mixa2130/docker_setups/blob/master/k8s/istio/README.md#маршрутизация-входящего-трафика-в-servicea)
+        * [1. Создаём Service](https://github.com/mixa2130/docker_setups/blob/master/k8s/istio/README.md#1.-создаём-service)
+        * [2. Gateway](https://github.com/mixa2130/docker_setups/blob/master/k8s/istio/README.md#2.-gateway)
+        * [3. Правила маршрутизации](https://github.com/mixa2130/docker_setups/blob/master/k8s/istio/README.md#3.-правила-маршрутизации)
+        * [Лог доступа](https://github.com/mixa2130/docker_setups/blob/master/k8s/istio/README.md#лог-доступа)
+* [Ingress -> serviceA -> serviceB](https://github.com/mixa2130/docker_setups/blob/master/k8s/istio/README.md#ingress-->-servicea-->-serviceb)
+    * [Маршрутизация из ServiceA в ServiceB](https://github.com/mixa2130/docker_setups/blob/master/k8s/istio/README.md#маршрутизация-из-servicea-в-serviceb)
+        * [1. Service для ServiceB](https://github.com/mixa2130/docker_setups/blob/master/k8s/istio/README.md#1.-service-для-serviceb)
+        * [2. Правила маршрутизации](https://github.com/mixa2130/docker_setups/blob/master/k8s/istio/README.md#2.-правила-маршрутизации)
+    * [Расщепление трафика из ServiceA по другим сервисам](https://github.com/mixa2130/docker_setups/blob/master/k8s/istio/README.md#расщепление-трафика-из-servicea-по-другим-сервисам)
+        * [1. Service для ServiceC](https://github.com/mixa2130/docker_setups/blob/master/k8s/istio/README.md#1.-service-для-servicec)
+        * [2. Правила маршрутизации](https://github.com/mixa2130/docker_setups/blob/master/k8s/istio/README.md#2.-правила-маршрутизации)
+    * [Egress](https://github.com/mixa2130/docker_setups/blob/master/k8s/istio/README.md#egress)
+        * [1. Gateway Egress](https://github.com/mixa2130/docker_setups/blob/master/k8s/istio/README.md#1.-gateway-egress)
+* [Полезные команды](https://github.com/mixa2130/docker_setups/blob/master/k8s/istio/README.md#полезные-команды)
+    * [Адрес по которому можно совершить запрос в ingress-шлюз](https://github.com/mixa2130/docker_setups/blob/master/k8s/istio/README.md#адрес-по-которому-можно-совершить-запрос-в-ingress-шлюз)
 
 # Service Mesh
 
@@ -136,8 +161,6 @@ HTTP-соединений с именем хоста example.com.
 Во внутренний реестр сервисов Istio будет добавлен новый сервис со значением хоста example.com, что наряду с другими
 конфигурациями egress-шлюза позволит Service B совершить исходящий запрос на внешний сервис
 
-# Сценарии
-
 # Ingres -> serviceA
 
 ![schema.png](examples/ingress-serviceA/schema.png)
@@ -205,13 +228,13 @@ kubectl logs -l app=service-a-app -c istio-proxy
    требуемой логикой (например обогатить заголовками для аутентификации запросов), мониторировать и контролировать его.
    Данный подход применяться в больших промышленных системах.
 
-### 1. Gateway Egress
+### Gateway Egress
 
 В соответствии с этим манифестом новое правило будет работать при вызовах на хост
 `istio-ingressgateway.istio-system.svc.cluster.local` из шлюза `istio-egressgateway`, а также из любого envoy-прокси в
-неймспейсе. 
+неймспейсе.
 Если вызов придёт из любого envoy-прокси в namespace (кроме istio-egressgateway), произойдет его
-перенаправление на хост istio-egressgateway. 
+перенаправление на хост istio-egressgateway.
 Если поступит запрос из istio-egressgateway, то он будет направлен на хост
 istio-ingressgateway.istio-system.svc.cluster.local. Таким образом достигается сосредоточение всех исходящих вызовов в
 кластере на шлюз istio-egressgateway.
@@ -220,14 +243,16 @@ istio-ingressgateway.istio-system.svc.cluster.local. Таким образом �
 
 *То есть ServiceC обращается к http://istio-ingressgateway.istio-system.svc.cluster.local/service-ext*
 
+[egress-gw.yaml](examples/egress/egress-gw.yaml)
+
 # Полезные команды
 
 ## Адрес по которому можно совершить запрос в ingress-шлюз
 
+host + port:
+
 ~~~bash
-# host
 kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
-# port
 kubectl -n istio-system get service istio-ingressgateway -o jsonpath='{.spec.ports[?(@.name=="http2")].port}'
 ~~~
 

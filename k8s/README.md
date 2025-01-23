@@ -737,14 +737,24 @@ kubectl explain {job/pod...}
 kubectl explain job.spec
 ~~~
 
-Логи:
+
+
+
+
+
+
+Удалить объект(удаляет каскадно):
 
 ~~~
-kubectl logs {имя объекта} {--previous} 
-kubectl logs hello-nr4bq
+kubectl delete {абстракция} {имя}
+kubectl delete job hello 
 ~~~
 
-Описание созданного объекта, что пошло не так и тд:
+## Отладка 
+
+Почему Pod-ы не стартуют?
+что пошло не так?
+почему restart?
 
 ~~~
 kubectl describe {абстракция} {название}
@@ -757,10 +767,9 @@ kubectl describe pod hello-2d5fb
 kubectl get events
 ~~~
 
-Удалить объект(удаляет каскадно):
+Логи:
 
 ~~~
-kubectl delete {абстракция} {имя}
-kubectl delete job hello 
+kubectl logs {имя объекта} {--previous} 
+kubectl logs hello-nr4bq
 ~~~
-

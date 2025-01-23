@@ -1,3 +1,24 @@
+* [Patroni](https://github.com/mixa2130/docker_setups/blob/master/postgresql/README.md#patroni)
+* [SQL](https://github.com/mixa2130/docker_setups/blob/master/postgresql/README.md#sql)
+    * [Работа с датами](https://github.com/mixa2130/docker_setups/blob/master/postgresql/README.md#работа-с-датами)
+    * [Фичи](https://github.com/mixa2130/docker_setups/blob/master/postgresql/README.md#фичи)
+        * [Record](https://github.com/mixa2130/docker_setups/blob/master/postgresql/README.md#record)
+        * [Using](https://github.com/mixa2130/docker_setups/blob/master/postgresql/README.md#using)
+        * [Unnest](https://github.com/mixa2130/docker_setups/blob/master/postgresql/README.md#unnest)
+        * [Coalesce](https://github.com/mixa2130/docker_setups/blob/master/postgresql/README.md#coalesce)
+        * [CASE WHEN](https://github.com/mixa2130/docker_setups/blob/master/postgresql/README.md#case-when)
+        * [CTE](https://github.com/mixa2130/docker_setups/blob/master/postgresql/README.md#cte)
+        * [Выбор из массива данных](https://github.com/mixa2130/docker_setups/blob/master/postgresql/README.md#выбор-из-массива-данных)
+    * [Оконные функции](https://github.com/mixa2130/docker_setups/blob/master/postgresql/README.md#оконные-функции)
+        * [ROWS BETWEEN](https://github.com/mixa2130/docker_setups/blob/master/postgresql/README.md#rows-between)
+        * [Aggregate vs window functions](https://github.com/mixa2130/docker_setups/blob/master/postgresql/README.md#aggregate-vs-window-functions)
+        * [Functions](https://github.com/mixa2130/docker_setups/blob/master/postgresql/README.md#functions)
+            * [Rank vs Dense_rank](https://github.com/mixa2130/docker_setups/blob/master/postgresql/README.md#rank-vs-dense_rank)
+            * [NTILE](https://github.com/mixa2130/docker_setups/blob/master/postgresql/README.md#ntile)
+            * [LAG и LEAD](https://github.com/mixa2130/docker_setups/blob/master/postgresql/README.md#lag-и-lead)
+        * [Rolling Sum](https://github.com/mixa2130/docker_setups/blob/master/postgresql/README.md#rolling-sum)
+    * [Lateral Join](https://github.com/mixa2130/docker_setups/blob/master/postgresql/README.md#lateral-join)
+
 # Patroni
 
 [Создание кластера Patroni](https://www.linode.com/docs/guides/create-a-highly-available-postgresql-cluster-using-patroni-and-haproxy/)
@@ -21,7 +42,39 @@ FROM MovieRating
 WHERE TO_CHAR(created_at, 'yyyy-mm') = '2020-02'
 ~~~
 
+Сделает datetime: `+00:00:00`
+
+~~~postgresql
+SELECT created_at + interval '1' day
+FROM smth
+~~~
+
+Просто добавить дни:
+
+~~~postgresql
+SELECT created_at + 6
+FROM smth
+~~~
+
 ## Фичи
+
+### LEFT AND RIGHT
+
+~~~sql
+LEFT(string, number_of_characters)
+RIGHT(string, number_of_characters)
+~~~
+* `string`: The text string whose leftmost or rightmost characters you want to extract. This can be a field name or a
+literal string.
+* `number_of_characters`: This is a positive integer that dictates how many characters from the start (left) or end (right)
+of the text string will be extracted.
+
+~~~postgresql
+SELECT 
+    LEFT('MARRY ANN', 1)
+-- M
+~~~
+
 
 ### Record
 
@@ -144,6 +197,15 @@ SELECT {columns},
                                        ROWS BETWEEN/ RANGE BETWEEN
                 )
 FROM table1;
+~~~
+
+Если у вас много одинаковых выражений после OVER, то можно дать им имя и вынести отдельно с ключевым словом WINDOW:
+
+~~~postgresql
+SELECT sum(salary) OVER w,
+       avg(salary) OVER w
+FROM empsalary
+WINDOW w AS (PARTITION BY depname ORDER BY salary DESC);
 ~~~
 
 ### ROWS BETWEEN
@@ -275,23 +337,22 @@ FROM Queue
 ~~~postgresql
 SELECT *
 FROM left_table
-JOIN LATERAL (subquery) AS alias ON condition;
+         JOIN LATERAL ( subquery) AS alias
+ON condition;
 ~~~
 
 Представьте, что у нас есть две таблицы:
-	•	users (содержит пользователей)
-	•	orders (содержит заказы, связанные с пользователями)
+• users (содержит пользователей)
+• orders (содержит заказы, связанные с пользователями)
 
 Если мы хотим получить самый последний заказ для каждого пользователя, без LATERAL это было бы сложнее:
 
 ~~~postgresql
 SELECT u.*, o.*
 FROM users u
-JOIN (
-    SELECT DISTINCT ON (user_id) *
-    FROM orders
-    ORDER BY user_id, created_at DESC
-) o ON u.id = o.user_id;
+         JOIN (SELECT DISTINCT ON (user_id) *
+               FROM orders
+               ORDER BY user_id, created_at DESC) o ON u.id = o.user_id;
 ~~~
 
 С помощью LATERAL мы можем упростить запрос:
@@ -299,16 +360,101 @@ JOIN (
 ~~~postgresql
 SELECT u.*, o.*
 FROM users u
-JOIN LATERAL (
+         JOIN LATERAL (
     SELECT *
     FROM orders
     WHERE orders.user_id = u.id
     ORDER BY created_at DESC
     LIMIT 1
-) o ON true;
+    ) o ON true;
 ~~~
 
 Объяснение:
-	* Для каждой строки в users (alias u), подзапрос внутри LATERAL ищет заказы, принадлежащие конкретному пользователю (orders.user_id = u.id).
-	* ORDER BY created_at DESC и LIMIT 1 обеспечивают выбор самого последнего заказа.
-	* ON true используется, так как условие соединения уже реализовано внутри подзапроса.
+
+* Для каждой строки в users (alias u), подзапрос внутри LATERAL ищет заказы, принадлежащие конкретному пользователю (
+  orders.user_id = u.id).
+* ORDER BY created_at DESC и LIMIT 1 обеспечивают выбор самого последнего заказа.
+* ON true используется, так как условие соединения уже реализовано внутри подзапроса.
+
+# Интересные подходы к решению задач
+
+## Скользящее окно без оконной функции
+
+https://leetcode.com/problems/restaurant-growth/?envType=study-plan-v2&envId=top-sql-50
+
+~~~
+Input: 
+Customer table:
++-------------+--------------+--------------+-------------+
+| customer_id | name         | visited_on   | amount      |
++-------------+--------------+--------------+-------------+
+| 1           | Jhon         | 2019-01-01   | 100         |
+| 2           | Daniel       | 2019-01-02   | 110         |
+| 3           | Jade         | 2019-01-03   | 120         |
+| 4           | Khaled       | 2019-01-04   | 130         |
+| 5           | Winston      | 2019-01-05   | 110         | 
+| 6           | Elvis        | 2019-01-06   | 140         | 
+| 7           | Anna         | 2019-01-07   | 150         |
+| 8           | Maria        | 2019-01-08   | 80          |
+| 9           | Jaze         | 2019-01-09   | 110         | 
+| 1           | Jhon         | 2019-01-10   | 130         | 
+| 3           | Jade         | 2019-01-10   | 150         | 
++-------------+--------------+--------------+-------------+
+Output: 
++--------------+--------------+----------------+
+| visited_on   | amount       | average_amount |
++--------------+--------------+----------------+
+| 2019-01-07   | 860          | 122.86         |
+| 2019-01-08   | 840          | 120            |
+| 2019-01-09   | 840          | 120            |
+| 2019-01-10   | 1000         | 142.86         |
++--------------+--------------+----------------+
+~~~
+
+Compute the moving average of how much the customer paid in a seven days window (i.e., current day + 6 days before).
+average_amount should be rounded to two decimal places.
+
+Чтобы собрать скользящее окно можно сделать:
+
+1) через оконную функцию:
+
+~~~postgresql
+SELECT SUM(amount) OVER seven_days_window as amount,
+       ROUND(
+                       AVG(amount) OVER seven_days_window,
+                       2)                 as average_amount
+FROM cte_grouped_amount
+WINDOW seven_days_window AS (ROWS BETWEEN CURRENT ROW AND 6 FOLLOWING)
+~~~
+
+2) Самому собрать окно
+
+~~~postgresql
+-- Интервал с конечными датами
+WITH last_6_days AS (SELECT DISTINCT visited_on
+                     FROM Customer
+                     ORDER BY visited_on ASC
+                     OFFSET 6)
+-- +--------------+
+-- | 2019-01-07   |
+-- | 2019-01-08   |
+-- | 2019-01-09   |
+-- | 2019-01-10   |
+-- +--------------+
+SELECT *
+FROM last_6_days c1
+         JOIN Customer c2
+              ON c2.visited_on
+--                Интервал: [на 6 дней раньше от текущей конечной и текущей]
+                  BETWEEN c1.visited_on - 6 AND c1.visited_on
+ORDER BY c1.visited_on
+-- +--------------+
+-- | 2019-01-07 | 2019-01-01 |
+-- | 2019-01-07 | 2019-01-02 |
+-- | 2019-01-07 | 2019-01-03 |
+-- | 2019-01-07 | 2019-01-04 |
+-- | 2019-01-07 | 2019-01-05 |
+-- | 2019-01-07 | 2019-01-06 |
+-- | 2019-01-07 | 2019-01-07 |
+-- | 2019-01-08 | 2019-01-02 |
+~~~

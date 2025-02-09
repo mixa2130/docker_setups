@@ -4,7 +4,7 @@ metadata:
   name: service-a-gw
 spec:
   selector:
-    istio: ingressgateway
+    istio: ingressgateway # говорит Istio, что этот Gateway применяется только к подам, у которых есть такая метка
   servers:
     - port:
         number: 80 # Порт, выставленный service-м наружу

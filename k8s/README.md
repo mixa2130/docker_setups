@@ -715,12 +715,26 @@ imagePullSecrets:
   - name: pull-secret-delta
 ~~~
 
+# Kustomization
+
+~~~bash
+# Посмотреть как будет сгенерированы манифесты
+kubectl kustomize {директория где лежит kustomization}
+# Применить
+kubectl apply -k {директория где лежит kustomization}
+~~~
+
 # Полезные ссылки
 
 * https://habr.com/ru/companies/ua-hosting/articles/502052/
 * https://codefresh.io/learn/software-deployment/what-is-blue-green-deployment
 
 # Шпаргалка по командам
+
+
+~~~
+kubectl set-context --current --namespace=coolapp
+~~~
 
 ~~~
 kubectl get pod -n {ns}

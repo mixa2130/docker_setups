@@ -383,6 +383,30 @@ FROM users u
 
 # Интересные подходы к решению задач
 
+## TOP N 
+
+~~~
+WITH cte_salary_rank AS (
+    SELECT 
+        name as Employee,
+        salary as Salary,
+        departmentId,
+        -- присваиваем номера в соответствии с ранжирование зп
+        DENSE_RANK() OVER (PARTITION BY departmentId ORDER BY salary DESC) as salary_rank 
+    FROM Employee
+)
+
+SELECT 
+    b.name as Department,
+    a.Employee,
+    a.Salary
+FROM cte_salary_rank a
+JOIN Department b ON
+    a.departmentId = b.id
+-- Выбираем топ N по строке ранжирования
+WHERE a.salary_rank <= 3
+~~~
+
 ## Скользящее окно без оконной функции
 
 https://leetcode.com/problems/restaurant-growth/?envType=study-plan-v2&envId=top-sql-50

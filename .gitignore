@@ -1,6 +1,7 @@
 # Own preferences
 /.idea
 /strava_crawlers
+/algs
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
